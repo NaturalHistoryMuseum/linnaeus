@@ -102,7 +102,7 @@ class Builder(object):
                     pickle.dump(zipped, f)
             return zipped
 
-    def fill(self, ref_map, comp_map, component_path, maps_dir=None):
+    def fill(self, ref_map, comp_map, component_path, maps_dir=None, adjust=True):
         start = dt.now()
         solution_file = os.path.join(maps_dir,
                                      'solution.pkl') if maps_dir is not None else None
@@ -121,8 +121,9 @@ class Builder(object):
                                  suffix='%(percent)d%%, %(elapsed_td)s')
             for ref_pixel, comp_id, hsv in solution:
                 ci = components[comp_id]
+                img = ci.adjust(*hsv) if adjust else ci.img
                 self.canvas.paste(*self.canvas.get_row_col(ref_pixel),
-                                  ci.adjust(*hsv), ci.id)
+                                  img, ci.id)
                 bar.next()
             bar.finish()
             print(f'Time taken to fill canvas: {dt.now() - start}')
