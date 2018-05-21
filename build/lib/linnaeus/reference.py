@@ -1,7 +1,6 @@
 import itertools
 from io import BytesIO
 
-import pandas as pd
 from PIL import Image
 
 from .common import hsv_pixels
@@ -59,7 +58,3 @@ class ReferenceImage(object):
         for p in hsv_to_index:
             ref_map.add(*p)
         return ref_map
-
-    def save_as_csv(self, fn):
-        hsv = pd.DataFrame(hsv_pixels(self.img), columns=['h', 's', 'v'])
-        hsv.to_csv(fn)

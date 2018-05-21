@@ -30,7 +30,7 @@ class Downloader(object):
     def save(self, img, asset_data):
         asset_id = asset_data.get('assetID', 'unknown')
         mime = asset_data.get('mime', 'jpg')
-        img.save_composite(f'{self.folder}/{asset_id}.{mime}')
+        img.save(f'{self.folder}/{asset_id}.{mime}')
 
     @staticmethod
     def format(img, detect=True):

@@ -92,6 +92,21 @@ class Map(object):
         bar.finish()
 
     @property
+    def csv(self):
+        output = []
+        for r in self.records:
+            output.append(','.join([str(r), str(r.item)]))
+        return '\n'.join(output)
+
+    def save(self, filename, mode='csv'):
+        try:
+            content = getattr(self, mode)
+        except AttributeError:
+            content = ''
+        with open(filename, 'w') as f:
+            f.write(content)
+
+    @property
     def records(self):
         return sorted(self._records)
 
