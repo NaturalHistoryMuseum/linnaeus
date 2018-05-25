@@ -1,7 +1,13 @@
+import json
 import math
 
 import numpy as np
 from progress.bar import IncrementalBar
+
+
+def _load_from_file(path):
+    with open(path, 'r') as f:
+        return f.readlines()
 
 
 class MapRecord(object):
@@ -63,49 +69,6 @@ class Map(object):
         r = MapRecord(h, s, v, item)
         self._records.append(r)
 
-    @classmethod
-    def load_from_csv(cls, csv_file):
-        with open(csv_file, 'r') as f:
-            rows = [r.strip().split(',') for r in f.readlines()]
-        new_map = cls()
-        bar = IncrementalBar(f'Loading {len(rows)} rows', max=len(rows),
-                             suffix='%(percent)d%%, %(avg)d')
-        for r in rows:
-            h, s, v = [int(i) if i is not 'null' else None for i in r[:3]]
-            try:
-                item = int(r[3])
-            except ValueError:
-                item = r[3]
-            new_map.add(h, s, v, item)
-            bar.next()
-        bar.finish()
-        return new_map
-
-    def save_to_csv(self, csv_file):
-        bar = IncrementalBar(f'Saving {len(self)} rows', max=len(self),
-                             suffix='%(percent)d%%')
-        with open(csv_file, 'w') as f:
-            for r in self.records:
-                f.write(','.join([str(r), str(r.item)]))
-                f.write('\n')
-                bar.next()
-        bar.finish()
-
-    @property
-    def csv(self):
-        output = []
-        for r in self.records:
-            output.append(','.join([str(r), str(r.item)]))
-        return '\n'.join(output)
-
-    def save(self, filename, mode='csv'):
-        try:
-            content = getattr(self, mode)
-        except AttributeError:
-            content = ''
-        with open(filename, 'w') as f:
-            f.write(content)
-
     @property
     def records(self):
         return sorted(self._records)
@@ -139,3 +102,70 @@ class Map(object):
             return next(r for r in self._records if r.item == item)
         except StopIteration:
             return None
+
+    @classmethod
+    def load_from_csv(cls, csv_, filepath=True):
+        if filepath:
+            csv_content = _load_from_file(csv_)
+        else:
+            csv_content = csv_
+        rows = [r.strip().split(',') for r in csv_content]
+        new_map = cls()
+        bar = IncrementalBar(f'Loading {len(rows)} rows', max=len(rows),
+                             suffix='%(percent)d%%, %(avg)d')
+        for r in rows:
+            h, s, v = [int(i) if i is not 'null' else None for i in r[:3]]
+            try:
+                item = int(r[3])
+            except ValueError:
+                item = r[3]
+            new_map.add(h, s, v, item)
+            bar.next()
+        bar.finish()
+        return new_map
+
+    @classmethod
+    def load_from_json(cls, json_, filepath=True):
+        if filepath:
+            content = json.loads(_load_from_file(json_))
+        else:
+            content = json.loads(json_)
+        new_map = cls()
+        for k, hsv in content.items():
+            h, s, v = [int(i) for i in hsv]
+            try:
+                item = int(k)
+            except ValueError:
+                item = k
+            new_map.add(h, s, v, item)
+        return new_map
+
+    def save_to_csv(self, csv_file):
+        bar = IncrementalBar(f'Saving {len(self)} rows', max=len(self),
+                             suffix='%(percent)d%%')
+        with open(csv_file, 'w') as f:
+            for r in self.records:
+                f.write(','.join([str(r), str(r.item)]))
+                f.write('\n')
+                bar.next()
+        bar.finish()
+
+    @property
+    def csv(self):
+        output = []
+        for r in self.records:
+            output.append(','.join([str(r), str(r.item)]))
+        return '\n'.join(output)
+
+    @property
+    def json(self):
+        output = {r.entry: [r.h, r.s, r.v] for r in self.records}
+        return json.dumps(output)
+
+    def save(self, filename, mode='csv'):
+        try:
+            content = getattr(self, mode)
+        except AttributeError:
+            content = ''
+        with open(filename, 'w') as f:
+            f.write(content)
