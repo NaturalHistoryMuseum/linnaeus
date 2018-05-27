@@ -8,7 +8,7 @@ from progress.bar import IncrementalBar
 
 from .common import hsv_pixels
 from .config import constants
-from .map import Map
+from .map import Map, MapRecord
 
 
 class ComponentImage(object):
@@ -108,7 +108,7 @@ class ComponentImage(object):
     def get_map(cls, components):
         component_map = Map()
         for c in components:
-            component_map.add(*c.dominant, c.id)
+            component_map.add(MapRecord(*c.dominant, c.id))
         return component_map
 
 

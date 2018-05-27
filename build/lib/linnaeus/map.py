@@ -10,13 +10,23 @@ def _load_from_file(path):
         return f.readlines()
 
 
+def _tryint(i):
+    try:
+        if isinstance(i, np.generic):
+            return np.asscalar(i)
+        else:
+            return int(i)
+    except ValueError:
+        return i
+
+
 class MapRecord(object):
     def __init__(self, h, s, v, item):
-        self.h = h
-        self.s = s
-        self.v = v
+        self.h = _tryint(h)
+        self.s = _tryint(s)
+        self.v = _tryint(v)
         self.item = item
-        self.entry = (h, s, v)
+        self.entry = (self.h, self.s, self.v)
 
     def _diff(self, other):
         h = (self.h - other.h) if other.h is not None else 0
@@ -57,6 +67,29 @@ class MapRecord(object):
         v_diff = abs(self.v - other.v)
         return h_diff + s_diff + v_diff
 
+    @property
+    def csv(self):
+        return ','.join([str(i) for i in [self.item, self.h, self.s, self.v]])
+
+    @property
+    def json(self):
+        return self.item, self.entry
+
+
+class PixelMapRecord(MapRecord):
+    def __init__(self, h, s, v, x, y):
+        super(PixelMapRecord, self).__init__(h, s, v, x * y)
+        self.x = x
+        self.y = y
+
+    @property
+    def csv(self):
+        return ','.join([str(i) for i in [self.x, self.y, self.h, self.s, self.v]])
+
+    @property
+    def json(self):
+        return '|'.join([str(self.x), str(self.y)]), self.entry
+
 
 class Map(object):
     def __init__(self):
@@ -65,8 +98,7 @@ class Map(object):
     def __len__(self):
         return len(self._records)
 
-    def add(self, h, s, v, item):
-        r = MapRecord(h, s, v, item)
+    def add(self, r):
         self._records.append(r)
 
     @property
@@ -108,18 +140,21 @@ class Map(object):
         if filepath:
             csv_content = _load_from_file(csv_)
         else:
-            csv_content = csv_
+            csv_content = csv_.split('\n')
         rows = [r.strip().split(',') for r in csv_content]
         new_map = cls()
         bar = IncrementalBar(f'Loading {len(rows)} rows', max=len(rows),
                              suffix='%(percent)d%%, %(avg)d')
         for r in rows:
-            h, s, v = [int(i) if i is not 'null' else None for i in r[:3]]
-            try:
-                item = int(r[3])
-            except ValueError:
-                item = r[3]
-            new_map.add(h, s, v, item)
+            if len(r) == 4:
+                item = _tryint(r[0])
+                h, s, v = [int(i) if i is not 'null' else None for i in r[1:]]
+                new_map.add(MapRecord(h, s, v, item))
+            elif len(r) == 5:
+                x = _tryint(r[0])
+                y = _tryint(r[1])
+                h, s, v = [int(i) if i is not 'null' else None for i in r[2:]]
+                new_map.add(PixelMapRecord(h, s, v, x, y))
             bar.next()
         bar.finish()
         return new_map
@@ -133,33 +168,27 @@ class Map(object):
         new_map = cls()
         for k, hsv in content.items():
             h, s, v = [int(i) for i in hsv]
-            try:
-                item = int(k)
-            except ValueError:
-                item = k
-            new_map.add(h, s, v, item)
+            if isinstance(k, str) and '|' in k:
+                x, y = [_tryint(i) for i in k.split('|')]
+                new_map.add(PixelMapRecord(h, s, v, x, y))
+            else:
+                item = _tryint(k)
+                new_map.add(MapRecord(h, s, v, item))
         return new_map
-
-    def save_to_csv(self, csv_file):
-        bar = IncrementalBar(f'Saving {len(self)} rows', max=len(self),
-                             suffix='%(percent)d%%')
-        with open(csv_file, 'w') as f:
-            for r in self.records:
-                f.write(','.join([str(r), str(r.item)]))
-                f.write('\n')
-                bar.next()
-        bar.finish()
 
     @property
     def csv(self):
         output = []
         for r in self.records:
-            output.append(','.join([str(r), str(r.item)]))
+            output.append(r.csv)
         return '\n'.join(output)
 
     @property
     def json(self):
-        output = {r.entry: [r.h, r.s, r.v] for r in self.records}
+        output = {}
+        for r in self.records:
+            k, v = r.json
+            output[k] = v
         return json.dumps(output)
 
     def save(self, filename, mode='csv'):

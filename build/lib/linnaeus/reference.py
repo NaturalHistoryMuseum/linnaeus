@@ -3,9 +3,9 @@ from io import BytesIO
 
 from PIL import Image
 
-from .common import hsv_pixels
+from .common import hsv_pixels, hsv_pixels_with_xy
 from .config import constants
-from .map import Map
+from .map import Map, PixelMapRecord
 
 
 class ReferenceImage(object):
@@ -52,9 +52,7 @@ class ReferenceImage(object):
 
     def get_map(self):
         ref_map = Map()
-        hsv = hsv_pixels(self.img)
-        hsv_to_index = [[int(x) for x in hsv[i]] + [i] for i in
-                        range(len(hsv))]
+        hsv_to_index = hsv_pixels_with_xy(self.img)
         for p in hsv_to_index:
-            ref_map.add(*p)
+            ref_map.add(PixelMapRecord(*p))
         return ref_map
