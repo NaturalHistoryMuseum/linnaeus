@@ -8,7 +8,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-from .api import API
+from .portal import API
 from .format import Formatter
 
 
