@@ -1,15 +1,18 @@
+import imghdr
 import json
+import os
 from io import BytesIO
 
 import cv2
 import numpy as np
 import requests
 from PIL import Image
-import os
-import imghdr
 
 from linnaeus.common import tryint
-from linnaeus.models import ComponentMap, ReferenceMap, Component
+from linnaeus.config import constants
+from linnaeus.models import (Component, ComponentMap, CoordinateEntry, HsvEntry,
+                             LocationEntry, ReferenceMap)
+from linnaeus.utils import portal
 
 
 class MapFactory:
@@ -42,13 +45,27 @@ class MapFactory:
 class ReferenceMapFactory:
     @classmethod
     def _build(cls, img):
+        """
+        Resize the image as necessary and build the map.
+        :param img: a PIL image object to build the map from
+        :return: ReferenceMap
+        """
+        max_side = max(img.size)
+        if max_side > constants.max_ref_side:
+            adjust = constants.max_ref_side / max_side
+            w, h = img.size
+            w = int(w * adjust)
+            h = int(h * adjust)
+            img = img.resize((w, h))
         new_map = ReferenceMap()
         pixels = np.array(img)
         r = 0
         for row in cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL):
             c = 0
             for col in row:
-                new_map.add(c, r, *[np.asscalar(i) for i in col])
+                rk = CoordinateEntry(c, r)
+                rv = HsvEntry(*[np.asscalar(i) for i in col])
+                new_map.add(rk, rv)
                 c += 1
             r += 1
         return new_map
@@ -97,16 +114,25 @@ class ReferenceMapFactory:
         content = json.loads(txt)
         new_map = ReferenceMap()
         for k, v in content.items():
-            new_map.add(*[tryint(i) for i in k.split('|')], *[tryint(i) for i in v])
+            rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
+            rv = HsvEntry(*[tryint(i) for i in v])
+            new_map.add(rk, rv)
         return new_map
 
 
 class ComponentMapFactory:
     @classmethod
     def _build(cls, components):
+        """
+        Builds a map from a list of component objects.
+        :param components: list of Component objects
+        :return: ComponentMap
+        """
         new_map = ComponentMap()
         for c in components:
-            new_map.add(c.location, *c.dominant)
+            rk = LocationEntry(c.location)
+            rv = HsvEntry(*c.dominant)
+            new_map.add(rk, rv)
         return new_map
 
     @classmethod
@@ -144,7 +170,7 @@ class ComponentMapFactory:
         for url in urls:
             try:
                 r = requests.get(url, timeout=10)
-                components.append(Image.open(BytesIO(r.content)), url)
+                components.append(Component(Image.open(BytesIO(r.content)), url))
             except requests.ReadTimeout:
                 continue
         return cls._build(components)
@@ -152,23 +178,35 @@ class ComponentMapFactory:
     @classmethod
     def from_portal(cls, query, **filters):
         """
-        Creates a ComponentMap from images downloaded from an NHM Data Portal query. The
-        images will be saved to a local folder.
+        Creates a ComponentMap from images downloaded from an NHM Data Portal query.
         :param query: a search term
         :param filters: additional parameters
         :return: ComponentMap
         """
-        return ComponentMap()
+        components = []
+        for page in portal.API.assets(portal.API.COLLECTIONS, query=query, **filters):
+            for asset in page:
+                try:
+                    r = requests.get(
+                        asset.get('identifier').replace('preview', 'thumbnail'),
+                        timeout=2)
+                    components.append(Component(Image.open(BytesIO(r.content)),
+                                                asset.get('identifier')))
+                except requests.ReadTimeout:
+                    continue
+        return cls._build(components)
 
     @classmethod
     def deserialise(cls, txt):
         """
-        Deserialise a JSON string to create a ReferenceMap.
+        Deserialise a JSON string to create a ComponentMap.
         :param txt: JSON string
-        :return: ReferenceMap
+        :return: ComponentMap
         """
         content = json.loads(txt)
         new_map = ComponentMap()
         for k, v in content.items():
-            new_map.add(k, *[tryint(i) for i in v])
+            rk = LocationEntry(k)
+            rv = HsvEntry(*[tryint(i) for i in v])
+            new_map.add(rk, rv)
         return new_map

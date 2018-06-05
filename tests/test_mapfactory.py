@@ -72,6 +72,6 @@ class TestComponentMapFactory:
         nosetools.assert_greater(len(comp_map), 0)
 
     def test_from_api(self):
-        comp_map = MapFactory.component().from_portal(query='red', collectionCode='min')
+        comp_map = MapFactory.component().from_portal(query='black', collectionCode='min', country='France')
         nosetools.assert_is_instance(comp_map, ComponentMap)
         nosetools.assert_greater(len(comp_map), 0)

@@ -6,7 +6,7 @@ from linnaeus.config import constants
 
 
 class Component(object):
-    def __init__(self, img: Image, location):
+    def __init__(self, img: Image, location = None):
         self.img = img
         self.location = location
 
