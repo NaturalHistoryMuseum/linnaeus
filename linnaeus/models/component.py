@@ -3,11 +3,14 @@ from PIL import Image, ImageChops
 
 from linnaeus import common
 from linnaeus.config import constants
+from linnaeus.utils import Formatter
 
 
 class Component(object):
     def __init__(self, img: Image, location = None):
-        self.img = img
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        self.img = Formatter.resize(img)
         self.location = location
 
         self.array = np.array(self.img)

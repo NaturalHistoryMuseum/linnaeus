@@ -24,6 +24,12 @@ class MapRecord(object):
     def __eq__(self, other):
         return self.value == other.value
 
+    def __sub__(self, other):
+        if isinstance(self.value, HsvEntry) and isinstance(other.value, HsvEntry):
+            return self.value - other.value
+        else:
+            raise NotImplementedError
+
 
 class BaseMap(abc.ABC):
     key_type = BaseEntry

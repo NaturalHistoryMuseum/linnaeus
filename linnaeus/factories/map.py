@@ -41,6 +41,25 @@ class MapFactory:
     def component(cls):
         return ComponentMapFactory
 
+    @classmethod
+    def load_text(cls, filepath):
+        """
+        Convenience method for loading content.
+        :param filepath: the path to the file
+        :return: str
+        """
+        with open(filepath, 'r') as f:
+            return f.read()
+
+    @classmethod
+    def save_text(cls, filepath, txt):
+        """
+        Convenience method for saving content to a file.
+        :param filepath: the path to the file
+        """
+        with open(filepath, 'w') as f:
+            f.write(txt)
+
 
 class ReferenceMapFactory:
     @classmethod
@@ -184,6 +203,7 @@ class ComponentMapFactory:
         :return: ComponentMap
         """
         components = []
+        # TODO: use a github-hosted cache
         for page in portal.API.assets(portal.API.COLLECTIONS, query=query, **filters):
             for asset in page:
                 try:

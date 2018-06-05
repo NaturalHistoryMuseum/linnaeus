@@ -26,11 +26,17 @@ pip install git+git://github.com/NaturalHistoryMuseum/linnaeus.git#egg=linnaeus
 
 The main part of this project is the composite image creation - however, there are also some utilities for downloading and formatting images.
 
+The core is divided into **map generation** and **processing**. These parts operate independently; **processing** does not call anything from **generation** and vice versa.
+
+**Map generation** creates JSON-based 'maps' (which can be saved, loaded, and parsed as normal JSON) of the colour of each pixel in the reference image and the dominant colour of each provided component image.
+
+**Processing** uses those maps to figure out which component image best matches each pixel (without repeating any), then builds an image from that. 
+
 ## Setting up a build
 
 To run the builder, you will need:
 - A reference image;
-- A folder full of component images, cropped and resized to the standard 'pixel' size defined in the configuration;
+- A folder full of component images;
 - Optionally, a configuration file to override the default settings.
 
 The example uses this painting of Carl Linnaeus as a reference image:
@@ -39,7 +45,7 @@ The example uses this painting of Carl Linnaeus as a reference image:
 The component images are a subset of specimen images (roughly 15,000) downloaded from the NHM's [Data Portal](http://data.nhm.ac.uk), like this one:
 ![Odontopera bidentata](http://www.nhm.ac.uk/services/media-store/asset/7364c60db49610b3ec31d854f0972d20c61fcd0c/contents/thumbnail)
 
-Except cropped and resized to 50x50 squares (there is a utility to do this):
+Except cropped and resized to 50x50 squares (see the Formatter utility):
 ![An array of resized specimen images](docs/specimens.jpg)
 
 The configuration file should be named `.config` and be inside your working directory. If you're fine with the defaults (shown below) then you don't have to have a config file.
@@ -75,63 +81,42 @@ example/
 The code for running a build can be fairly short:
 
 ```python
-from linnaeus import ReferenceImage, Builder, ComponentCache
+from linnaeus import Builder, MapFactory
 
 # PATH DEFINITIONS
 # ----------------
 ref_image_path = './refs/linnaeus.jpg'  # path to reference image
 component_image_dir = './specimens'  # folder with the formatted components
-cache_path = 'component.cache'  # the name doesn't really matter
-map_save_dir = './maps'  # 'map' csv files will be saved into/loaded from this folder
 composite_save_path = './composite.jpg'  # where to save the output
 
-# OBJECTS
+# MAP GENERATION
 # -------
-# create a reference image object
-ref = ReferenceImage(ref_image_path)
-# create a cache to store the dominant hsv colour for each component
-cache = ComponentCache(cache_path)
-# create a 'builder' to construct the composite
-builder = Builder(ref, cache)
+# create a reference map
+ref = MapFactory.reference().from_image_local(ref_image_path)
+# create a component map
+comp = MapFactory.component().from_local(folders=[component_image_dir])
 
 # PROCESSING
 # ----------
-# load or create csv 'maps' of hsv values
-ref_pixel_map, component_map = builder.load_maps(map_save_dir, component_image_dir)
-# create a new blank 'canvas'
-builder.new_composite()
-# match the components to pixels and paste onto the canvas
-builder.fill(ref_pixel_map, component_map, component_image_dir, map_save_dir)
+# find the solution from the maps
+solution = Builder.solve(ref, comp)
+# use the solution map to fill a canvas
+canvas = Builder.fill(solution)
 # save the canvas
-builder.save_composite(composite_save_path)
+canvas.save(composite_save_path)
 ```
+
+A more complete example (including saving/loading maps) can be found in `example/main.py`.
 
 ## Running
 
-You can then just run your script as normal.
+You can then just run your script as normal, e.g.
 
-The output on the first run will look a bit like this:
-```
-Loading 7600 rows |████████████████████████████████| 100%, 0
-Loading 14983 rows |████████████████████████████████| 100%, 0
-Calculating mesh grids...
-Calculating score matrix (this may take a while)...
-Calculating assignments (this may also take a while)...
-113893383
-Solving...
-Total cost =  31105150
-113893383
-Loading 7600 components |████████████████████████████████| 100%, 0:00:01
-Inserting images |████████████████████████████████| 100%, 0:00:23
-Time taken to fill canvas: 0:29:11.364318
-Saving composite...
-Everything done!
+```bash
+python your_script.py
 ```
 
-Then subsequently:
-[![asciicast](https://asciinema.org/a/178460.png)](https://asciinema.org/a/178460)
-
-On first running, it may take a while - this example took around half an hour. The example folder in this repo includes all the caches and maps for `linnaeus.jpg`, so if you just want to run the example it should only take about 30 seconds.
+On first running, it may take a while - this example took around half an hour. The example folder in this repo includes all the maps for `linnaeus.jpg`, so if you just want to run the example it should only take about 30 seconds.
 
 ## Utilities
 
@@ -162,6 +147,8 @@ for page in API.collections(query='boops', collectionCode='zoo', kindOfObject='s
 ### Formatter
 
 This resizes and crops images to the pixel size defined in the config.
+
+It is used to resize images automatically when creating a component, but it does not rotate or detect automatically.
 
 If `detect=True` when downloading, each image will be searched for 'colourful' areas and each will be cropped down to the largest area. This is just a crude attempt to try and isolate interesting parts of the images.
 
@@ -212,3 +199,11 @@ Small confession: it does cheat a _little_ bit. The pixels are matched to the be
 Here's an example of this (unadjusted on the left, adjusted on the right):
 
 ![Unadjusted vs adjusted output](docs/composite.jpg)
+
+If you don't want this behaviour, add `adjust=False` into the `Builder.fill()` method:
+
+```python
+solution = Builder.solve(reference_map, component_map)
+canvas = Builder.fill(solution, adjust=False)
+canvas.save('output.jpg')
+```
