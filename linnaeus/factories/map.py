@@ -10,8 +10,8 @@ from PIL import Image
 
 from linnaeus.common import tryint
 from linnaeus.config import constants
-from linnaeus.models import (Component, ComponentMap, CoordinateEntry, HsvEntry,
-                             LocationEntry, ReferenceMap)
+from linnaeus.models import (CombinedEntry, Component, ComponentMap, CoordinateEntry,
+                             HsvEntry, LocationEntry, ReferenceMap, SolutionMap)
 from linnaeus.utils import portal
 
 
@@ -40,6 +40,10 @@ class MapFactory:
     @classmethod
     def component(cls):
         return ComponentMapFactory
+
+    @classmethod
+    def solution(cls):
+        return SolutionMapFactory
 
     @classmethod
     def load_text(cls, filepath):
@@ -228,5 +232,24 @@ class ComponentMapFactory:
         for k, v in content.items():
             rk = LocationEntry(k)
             rv = HsvEntry(*[tryint(i) for i in v])
+            new_map.add(rk, rv)
+        return new_map
+
+
+class SolutionMapFactory:
+    @classmethod
+    def deserialise(cls, txt):
+        """
+        Deserialise a JSON string to create a SolutionMap.
+        :param txt: JSON string
+        :return: SolutionMap
+        """
+        content = json.loads(txt)
+        new_map = SolutionMap()
+        for k, v in content.items():
+            rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
+            rv = CombinedEntry(**{
+                ek: SolutionMap.combined_types[ek](*ev) if isinstance(ev, list) else
+                SolutionMap.combined_types[ek](ev) for ek, ev in v.items()})
             new_map.add(rk, rv)
         return new_map

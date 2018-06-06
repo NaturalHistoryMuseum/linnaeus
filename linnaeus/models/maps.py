@@ -1,7 +1,7 @@
 import abc
 import json
 
-from .entries import BaseEntry, CoordinateEntry, HsvEntry, LocationEntry
+from .entries import BaseEntry, CombinedEntry, CoordinateEntry, HsvEntry, LocationEntry
 
 
 class MapRecord(object):
@@ -86,7 +86,8 @@ class ReferenceMap(BaseMap):
 
     @property
     def bounds(self):
-        return max(self._records, key=lambda x: (x.key.x, x.key.y))
+        return [i + 1 for i in
+                max(self._records, key=lambda x: (x.key.x, x.key.y)).key.entry]
 
 
 class ComponentMap(BaseMap):
@@ -101,4 +102,15 @@ class ComponentMap(BaseMap):
 
 class SolutionMap(ReferenceMap):
     key_type = CoordinateEntry
-    value_type = LocationEntry
+    value_type = CombinedEntry
+    combined_types = {
+        'path': LocationEntry,
+        'target': HsvEntry
+    }
+
+    def validate(self, record):
+        for k, e in record.value.entries.items():
+            entry_type = self.combined_types.get(k, None)
+            if entry_type is None or not isinstance(e, entry_type):
+                return False
+        return super(SolutionMap, self).validate(record)

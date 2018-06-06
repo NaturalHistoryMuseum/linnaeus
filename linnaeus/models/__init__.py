@@ -1,3 +1,3 @@
 from .component import Component
-from .entries import CoordinateEntry, HsvEntry, LocationEntry
-from .maps import ComponentMap, MapRecord, ReferenceMap
+from .entries import CoordinateEntry, HsvEntry, LocationEntry, CombinedEntry
+from .maps import ComponentMap, MapRecord, ReferenceMap, SolutionMap

@@ -45,6 +45,10 @@ class CoordinateEntry(BaseEntry):
         self.x = x
         self.y = y
 
+    @property
+    def entry(self):
+        return self.x, self.y
+
     def __str__(self):
         return f'{self.x}|{self.y}'
 
@@ -54,7 +58,7 @@ class CoordinateEntry(BaseEntry):
 
 
 class LocationEntry(BaseEntry):
-    def __init__(self, path, path_type=None, target=None):
+    def __init__(self, path, path_type=None):
         super(LocationEntry, self).__init__(path)
         self.path = path
         if path_type is not None:
@@ -64,10 +68,8 @@ class LocationEntry(BaseEntry):
                 self._type = 'url'
             else:
                 self._type = 'local'
-        self.target = target
 
-    @property
-    def entry(self):
+    def get(self):
         if self._type == 'url':
             try:
                 r = requests.get(self.path, timeout=10)
@@ -76,7 +78,7 @@ class LocationEntry(BaseEntry):
                 raise AttributeError(f'Unable to retrieve content: {self.path}')
         elif self._type == 'local':
             if os.path.exists(self.path):
-                Image.open(self.path)
+                return Image.open(self.path)
             else:
                 raise AttributeError(f'File does not exist: {self.path}')
         else:
@@ -86,8 +88,9 @@ class LocationEntry(BaseEntry):
         return self._type is not None
 
 
-class HsvEntry(object):
+class HsvEntry(BaseEntry):
     def __init__(self, hue, saturation, value):
+        super(HsvEntry, self).__init__((hue, saturation, value))
         self.h = hue
         self.s = saturation
         self.v = value
@@ -137,3 +140,15 @@ class HsvEntry(object):
         s_diff = abs(self.s - other.s)
         v_diff = abs(self.v - other.v)
         return h_diff + s_diff + v_diff
+
+
+class CombinedEntry(BaseEntry):
+    def __init__(self, **entries):
+        super(CombinedEntry, self).__init__({k: e.entry for k, e in entries.items()})
+        self.entries = entries
+
+    def validate(self):
+        if all([issubclass(type(e), BaseEntry) for k, e in self.entries.items()]):
+            return all([e.validate() for k, e in self.entries.items()])
+        else:
+            return False
