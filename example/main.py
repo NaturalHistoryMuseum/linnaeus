@@ -9,7 +9,7 @@ ref_image_path = os.path.join(root, 'refs/linnaeus.jpg')
 # best to use local files for the components rather than the url or API methods
 component_image_dir = os.path.join(root, 'specimens')
 # where to save the output
-composite_save_path = os.path.join(root, 'outputs/composite.jpg')
+composite_save_path = os.path.join(root, 'outputs/new_composite.jpg')
 # where to save the maps
 map_save_dir = os.path.join(root, 'maps')
 ref_map_save_path = os.path.join(map_save_dir, 'ref.json')
@@ -41,10 +41,18 @@ else:
 # PROCESSING
 # ----------
 # find the solution from the maps
-solution_map = Builder.solve(reference_map, component_map)
+if os.path.exists(sol_map_save_path):
+    # load a component map
+    solution_map = MapFactory.solution().deserialise(
+        MapFactory.load_text(sol_map_save_path))
+else:
+    # make a new solution map
+    solution_map = Builder.solve(reference_map, component_map)
+    # save the solution
+    MapFactory.save_text(sol_map_save_path, solution_map.serialise())
+
 # use the solution map to fill a canvas
 canvas = Builder.fill(solution_map)
 # save the canvas
 canvas.save(composite_save_path)
-# save the solution
-MapFactory.save_text(sol_map_save_path, solution_map.serialise())
+

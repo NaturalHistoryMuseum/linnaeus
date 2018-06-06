@@ -38,13 +38,26 @@ class BaseMap(abc.ABC):
     def __init__(self):
         self._records = []
         self._keys = set()
+        self._cache = False
+        self._sortedrecords = None
 
     def __len__(self):
         return len(self._records)
 
+    def done(self):
+        # TODO: use a context manager to add records
+        self._cache = True
+
     @property
     def records(self):
-        return sorted(self._records)
+        # cached to avoid repeating expensive sorts
+        if self._sortedrecords is None:
+            sorted_records = sorted(self._records)
+            if self._cache:
+                self._sortedrecords = sorted_records
+            else:
+                return sorted_records
+        return self._sortedrecords
 
     def serialise(self):
         record_dump = {str(r.key): r.value.entry for r in self._records}

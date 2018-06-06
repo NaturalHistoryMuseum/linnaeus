@@ -12,6 +12,8 @@ from .models import CombinedEntry, Component, SolutionMap
 class Builder(object):
     @classmethod
     def cost_matrix(cls, ref_map, comp_map):
+        ref_map.done()
+        comp_map.done()
         logger.debug('calculating cost matrix')
         ref_records = np.array(ref_map.records)
         if len(ref_map) > len(comp_map):
@@ -27,6 +29,8 @@ class Builder(object):
 
     @classmethod
     def solve(cls, ref_map, comp_map):
+        ref_map.done()
+        comp_map.done()
         cost_matrix = cls.cost_matrix(ref_map, comp_map)
         rows, cols = cost_matrix.shape
         logger.debug('constructing solver')
