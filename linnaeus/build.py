@@ -1,134 +1,87 @@
-import math
-import os
-import pickle
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 
 import numpy as np
 from PIL import Image
 from ortools.graph import pywrapgraph
-from progress.bar import IncrementalBar
+from scipy.spatial.distance import cdist
 
-from .component import ComponentCache, ComponentImage
-from .config import constants
-from .map import Map
-from .reference import ReferenceImage
+from .config import constants, logger
+from .models import CombinedEntry, Component, SolutionMap
 
 
 class Builder(object):
-    def __init__(self, ref: ReferenceImage, cache: ComponentCache):
-        self.ref = ref
-        self.canvas = None
-        self.cache = cache
-
-    def new_composite(self):
-        self.canvas = Canvas(self.ref.size)
-
-    def save_composite(self, fn):
-        self.canvas.save(fn)
-
-    def make_maps(self, component_path, save_dir=None):
-        ref_map = self.ref.get_map()
-        components = ComponentImage.load_components_from_folder(path=component_path,
-                                                                cache=self.cache)
-        comp_map = ComponentImage.get_map(components)
-        if save_dir is not None:
-            if not os.path.exists(save_dir):
-                os.mkdir(save_dir)
-            ref_map.save_to_csv(os.path.join(save_dir, 'ref.csv'))
-            comp_map.save_to_csv(os.path.join(save_dir, 'comp.csv'))
-        for c in components:
-            self.cache.cache(c)
-        self.cache.save()
-        return ref_map, comp_map
-
-    def load_maps(self, save_dir, component_path='.'):
-        ref_path = os.path.join(save_dir, 'ref.csv')
-        comp_path = os.path.join(save_dir, 'comp.csv')
-        if os.path.exists(ref_path) and os.path.exists(comp_path):
-            ref_map = Map.load_from_csv(ref_path)
-            comp_map = Map.load_from_csv(comp_path)
-        else:
-            ref_map, comp_map = self.make_maps(component_path, save_dir)
-        return ref_map, comp_map
+    @classmethod
+    def cost_matrix(cls, ref_map, comp_map):
+        ref_map.done()
+        comp_map.done()
+        logger.debug('building arrays')
+        ref_records = np.array([r.value.array for r in ref_map.records])
+        comp_records = np.array([r.value.array for r in comp_map.records])
+        logger.debug('calculating cost matrix')
+        xy = cdist(ref_records, comp_records)
+        logger.debug('finished calculating cost matrix')
+        return xy.astype(int)
 
     @classmethod
-    def load_solution(cls, path):
-        with open(path, 'rb') as f:
-            solution = pickle.load(f)
-        return solution
-
-    @classmethod
-    def solve(cls, ref_map, comp_map, save_as=None):
-        cost_matrix = ref_map.cost_matrix(comp_map)
+    def solve(cls, ref_map, comp_map):
+        ref_map.done()
+        comp_map.done()
+        cost_matrix = cls.cost_matrix(ref_map, comp_map)
         rows, cols = cost_matrix.shape
-        print('Calculating assignments (this may also take a while)...')
+        logger.debug('constructing solver')
         solver = pywrapgraph.SimpleMinCostFlow()
-        pixel_nodes = [i + 1 for i in range(rows)]
-        comp_nodes = [i + 1 for i in range(rows, rows + cols)]
-        start_nodes = ([0] * rows) + [x for i in pixel_nodes for x in
-                                      [i] * cols] + comp_nodes
-        end_nodes = pixel_nodes + [x for i in range(rows) for x in comp_nodes] + (
-                [rows + cols + 1] * cols)
-        capacities = [1] * len(start_nodes)
-        costs = ([0] * rows) + cost_matrix.flatten().tolist() + ([0] * cols)
-        supplies = [rows] + ([0] * (rows + cols)) + [-rows]
-        print(len(start_nodes))
-        c = 0
-        for i in range(len(start_nodes)):
-            solver.AddArcWithCapacityAndUnitCost(start_nodes[i], end_nodes[i],
-                                                 capacities[i], costs[i])
-            c += 1
-            print(c, end='\r')
-        for i in range(len(supplies)):
-            solver.SetNodeSupply(i, supplies[i])
-        print('Solving...')
+        arcs = np.stack((
+            np.concatenate((np.zeros(rows), np.repeat(np.arange(1, rows + 1), cols),
+                            np.arange(rows + 1, rows + cols + 1))),
+            np.concatenate((np.arange(1, rows + 1),
+                            np.tile(np.arange(rows + 1, rows + cols + 1), rows),
+                            np.repeat(rows + cols + 1, cols))),
+            np.concatenate((np.zeros(rows), cost_matrix.flatten(), np.zeros(cols)))
+            ), axis=1).astype(int)
+        supplies = np.concatenate(([rows], np.zeros(rows + cols), [-rows])).astype(int)
+        for a in arcs:
+            a = a.tolist()
+            solver.AddArcWithCapacityAndUnitCost(a[0], a[1], 1, a[2])
+        for i in range(supplies.size):
+            solver.SetNodeSupply(i, np.asscalar(supplies[i]))
+        logger.debug('solving')
         if solver.Solve() == solver.OPTIMAL:
-            print('Total cost = ', solver.OptimalCost())
-            zipped = []
-            c = 0
-            print(solver.NumArcs())
+            solution = SolutionMap()
+            logger.debug('building solution map')
+            start = dt.now()
+            logger.debug(f'processing {solver.NumArcs()} arcs')
+            interval = int(solver.NumArcs() / 20)
             for arc in range(solver.NumArcs()):
                 if 0 < solver.Tail(arc) <= len(ref_map) and solver.Head(arc) != len(
-                        start_nodes):
+                        arcs):
                     if solver.Flow(arc) > 0:
                         pixel = ref_map.worker(solver.Tail(arc))
                         comp = comp_map.task(solver.Head(arc),
                                              len(ref_map))
-                        zipped.append((pixel.item, comp.item, pixel.entry))
-                c += 1
-                print(c, end='\r')
-            if save_as is not None:
-                with open(save_as, 'wb') as f:
-                    pickle.dump(zipped, f)
-            return zipped
+                        combined_value = CombinedEntry(path=comp.key, target=pixel.value)
+                        solution.add(pixel.key, combined_value)
+                if arc % interval == 0:
+                    avg = (dt.now() - start).total_seconds() / (arc + 1)
+                    rate = round(1 / avg, 1)
+                    etr = timedelta(seconds=avg * (solver.NumArcs() - (arc + 1)))
+                    logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
+            logger.debug('finished solving')
+            return solution
+        else:
+            raise Exception('failed to solve')
 
-    def fill(self, ref_map, comp_map, component_path, maps_dir=None, adjust=True):
-        start = dt.now()
-        solution_file = os.path.join(maps_dir,
-                                     'solution.pkl') if maps_dir is not None else None
-        if solution_file is not None and os.path.exists(solution_file):
-            print('Loading solution from file.')
-            solution = Builder.load_solution(solution_file)
-        else:
-            solution = Builder.solve(ref_map, comp_map, save_as=solution_file)
-        if solution is not None:
-            components = {ci.id: ci for ci in
-                          ComponentImage.load_components_from_folder(component_path,
-                                                                     self.cache,
-                                                                     [x[1] for x in
-                                                                      solution])}
-            bar = IncrementalBar('Inserting images', max=len(ref_map),
-                                 suffix='%(percent)d%%, %(elapsed_td)s')
-            for ref_pixel, comp_id, hsv in solution:
-                ci = components[comp_id]
-                img = ci.adjust(*hsv) if adjust else ci.img
-                self.canvas.paste(*self.canvas.get_row_col(ref_pixel),
-                                  img, ci.id)
-                bar.next()
-            bar.finish()
-            print(f'Time taken to fill canvas: {dt.now() - start}')
-        else:
-            print('No solution found.')
+    @classmethod
+    def fill(cls, solution_map: SolutionMap, adjust=True):
+        logger.debug('building image')
+        canvas = Canvas(solution_map.bounds)
+        for record in solution_map.records:
+            component = Component(record.value.entries['path'].get())
+            target = record.value.entries.get('target', None)
+            img = component.adjust(
+                *target.entry) if adjust and target is not None else component.img
+            canvas.paste(record.key.x, record.key.y, img, record.value.entries['path'])
+        logger.debug('image finished')
+        return canvas
 
 
 class Canvas(object):
@@ -140,13 +93,7 @@ class Canvas(object):
         self.composite, self.component_id_array = Image.new('RGB', (self.w, self.h),
                                                             0), np.chararray(size)
 
-    def get_row_col(self, index):
-        w, h = self.ref_size
-        row = int(math.floor(index / w))
-        col = index - (w * row)
-        return row, col
-
-    def paste(self, row, col, image, component_id):
+    def paste(self, col, row, image, component_id):
         x_offset = col * constants.pixel_width
         y_offset = row * constants.pixel_height
         self.composite.paste(image, (x_offset, y_offset))
