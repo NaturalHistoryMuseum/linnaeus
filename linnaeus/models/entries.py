@@ -4,6 +4,8 @@ from io import BytesIO
 
 import requests
 from PIL import Image
+import numpy as np
+from cached_property import cached_property
 
 
 class BaseEntry(object):
@@ -94,6 +96,7 @@ class HsvEntry(BaseEntry):
         self.h = hue
         self.s = saturation
         self.v = value
+        self.array = np.array(self.entry)
 
     @property
     def entry(self):
@@ -136,10 +139,7 @@ class HsvEntry(BaseEntry):
         return f'{self.h},{self.s},{self.v}'
 
     def __sub__(self, other):
-        h_diff = abs(self.h - other.h)
-        s_diff = abs(self.s - other.s)
-        v_diff = abs(self.v - other.v)
-        return h_diff + s_diff + v_diff
+        return abs(self.array - other.array).sum()
 
 
 class CombinedEntry(BaseEntry):

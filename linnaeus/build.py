@@ -1,9 +1,9 @@
-import math
 from datetime import datetime as dt, timedelta
 
 import numpy as np
 from PIL import Image
 from ortools.graph import pywrapgraph
+from scipy.spatial.distance import cdist
 
 from .config import constants, logger
 from .models import CombinedEntry, Component, SolutionMap
@@ -14,16 +14,11 @@ class Builder(object):
     def cost_matrix(cls, ref_map, comp_map):
         ref_map.done()
         comp_map.done()
+        logger.debug('building arrays')
+        ref_records = np.array([r.value.array for r in ref_map.records])
+        comp_records = np.array([r.value.array for r in comp_map.records])
         logger.debug('calculating cost matrix')
-        ref_records = np.array(ref_map.records)
-        if len(ref_map) > len(comp_map):
-            comp_records = comp_map.records * int(
-                math.ceil(len(ref_map) / len(comp_map)))
-        else:
-            comp_records = comp_map.records
-        comp_records = np.array(comp_records)
-        xv, yv = np.meshgrid(comp_records, ref_records)
-        xy = (xv - yv) ** 2
+        xy = cdist(ref_records, comp_records)
         logger.debug('finished calculating cost matrix')
         return xy.astype(int)
 
@@ -35,20 +30,20 @@ class Builder(object):
         rows, cols = cost_matrix.shape
         logger.debug('constructing solver')
         solver = pywrapgraph.SimpleMinCostFlow()
-        pixel_nodes = [i + 1 for i in range(rows)]
-        comp_nodes = [i + 1 for i in range(rows, rows + cols)]
-        start_nodes = ([0] * rows) + [x for i in pixel_nodes for x in
-                                      [i] * cols] + comp_nodes
-        end_nodes = pixel_nodes + [x for i in range(rows) for x in comp_nodes] + (
-                [rows + cols + 1] * cols)
-        capacities = [1] * len(start_nodes)
-        costs = ([0] * rows) + cost_matrix.flatten().tolist() + ([0] * cols)
-        supplies = [rows] + ([0] * (rows + cols)) + [-rows]
-        for i in range(len(start_nodes)):
-            solver.AddArcWithCapacityAndUnitCost(start_nodes[i], end_nodes[i],
-                                                 capacities[i], costs[i])
-        for i in range(len(supplies)):
-            solver.SetNodeSupply(i, supplies[i])
+        arcs = np.stack((
+            np.concatenate((np.zeros(rows), np.repeat(np.arange(1, rows + 1), cols),
+                            np.arange(rows + 1, rows + cols + 1))),
+            np.concatenate((np.arange(1, rows + 1),
+                            np.tile(np.arange(rows + 1, rows + cols + 1), rows),
+                            np.repeat(rows + cols + 1, cols))),
+            np.concatenate((np.zeros(rows), cost_matrix.flatten(), np.zeros(cols)))
+            ), axis=1).astype(int)
+        supplies = np.concatenate(([rows], np.zeros(rows + cols), [-rows])).astype(int)
+        for a in arcs:
+            a = a.tolist()
+            solver.AddArcWithCapacityAndUnitCost(a[0], a[1], 1, a[2])
+        for i in range(supplies.size):
+            solver.SetNodeSupply(i, np.asscalar(supplies[i]))
         logger.debug('solving')
         if solver.Solve() == solver.OPTIMAL:
             solution = SolutionMap()
@@ -58,7 +53,7 @@ class Builder(object):
             interval = int(solver.NumArcs() / 20)
             for arc in range(solver.NumArcs()):
                 if 0 < solver.Tail(arc) <= len(ref_map) and solver.Head(arc) != len(
-                        start_nodes):
+                        arcs):
                     if solver.Flow(arc) > 0:
                         pixel = ref_map.worker(solver.Tail(arc))
                         comp = comp_map.task(solver.Head(arc),
@@ -72,6 +67,8 @@ class Builder(object):
                     logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
             logger.debug('finished solving')
             return solution
+        else:
+            raise Exception('failed to solve')
 
     @classmethod
     def fill(cls, solution_map: SolutionMap, adjust=True):
