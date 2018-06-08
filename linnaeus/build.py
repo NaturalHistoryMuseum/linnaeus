@@ -1,12 +1,32 @@
-from datetime import datetime as dt, timedelta
+import math
 
 import numpy as np
 from PIL import Image
 from ortools.graph import pywrapgraph
-from scipy.spatial.distance import cdist
+from scipy import sparse
+from sklearn.metrics.pairwise import pairwise_distances
 
-from .config import constants, logger
+from .config import ProgressLogger, constants, logger
 from .models import CombinedEntry, Component, SolutionMap
+
+
+def start_nodes(rows, cols):
+    logger.debug('finding start nodes')
+    return sparse.hstack(
+        (np.zeros(rows), np.repeat(np.arange(1, rows + 1), cols),
+         np.arange(rows + 1, rows + cols + 1))).T
+
+
+def end_nodes(rows, cols):
+    logger.debug('finding end nodes')
+    return sparse.hstack((np.arange(1, rows + 1),
+                          np.tile(np.arange(rows + 1, rows + cols + 1), rows),
+                          np.repeat(rows + cols + 1, cols))).T
+
+
+def costs(rows, cols, cost_matrix):
+    logger.debug('finding arc costs')
+    return sparse.hstack((np.zeros(rows), cost_matrix.flatten(), np.zeros(cols))).T
 
 
 class Builder(object):
@@ -15,12 +35,14 @@ class Builder(object):
         ref_map.done()
         comp_map.done()
         logger.debug('building arrays')
-        ref_records = np.array([r.value.array for r in ref_map.records])
-        comp_records = np.array([r.value.array for r in comp_map.records])
+        ref_records = sparse.csr_matrix([r.value.array for r in ref_map.records])
+        comp_records = sparse.csr_matrix([r.value.array for r in comp_map.records])
         logger.debug('calculating cost matrix')
-        xy = cdist(ref_records, comp_records)
+        xy = pairwise_distances(ref_records, comp_records)
+        logger.debug('calculated distances - now normalising')
+        cm = xy - xy.min()
         logger.debug('finished calculating cost matrix')
-        return xy.astype(int)
+        return cm
 
     @classmethod
     def solve(cls, ref_map, comp_map):
@@ -28,43 +50,45 @@ class Builder(object):
         comp_map.done()
         cost_matrix = cls.cost_matrix(ref_map, comp_map)
         rows, cols = cost_matrix.shape
-        logger.debug('constructing solver')
-        solver = pywrapgraph.SimpleMinCostFlow()
-        arcs = np.stack((
-            np.concatenate((np.zeros(rows), np.repeat(np.arange(1, rows + 1), cols),
-                            np.arange(rows + 1, rows + cols + 1))),
-            np.concatenate((np.arange(1, rows + 1),
-                            np.tile(np.arange(rows + 1, rows + cols + 1), rows),
-                            np.repeat(rows + cols + 1, cols))),
-            np.concatenate((np.zeros(rows), cost_matrix.flatten(), np.zeros(cols)))
-            ), axis=1).astype(int)
+        arc_count = rows + cols + (rows * cols)
+        logger.debug(f'calculating {arc_count} arcs')
+        arcs = sparse.hstack((start_nodes(rows, cols), end_nodes(rows, cols),
+                              costs(rows, cols, cost_matrix)),
+                             format='csr').astype(int)
         supplies = np.concatenate(([rows], np.zeros(rows + cols), [-rows])).astype(int)
-        for a in arcs:
-            a = a.tolist()
-            solver.AddArcWithCapacityAndUnitCost(a[0], a[1], 1, a[2])
+        logger.debug('calculated arcs, now adding to solver')
+        solver = pywrapgraph.SimpleMinCostFlow()
+        with ProgressLogger(arc_count, 20) as p:
+            block_size = 100000
+            for i in range(int(math.ceil(arc_count / block_size))):
+                start = i * block_size
+                end = min((i + 1) * block_size, arc_count + 1)
+                block = arcs[start:end].toarray()
+                for arc in block:
+                    solver.AddArcWithCapacityAndUnitCost(arc[0].item(), arc[1].item(), 1,
+                                                         arc[2].item())
+                    p.next()
+        del arcs
+        logger.debug('adding node supply')
         for i in range(supplies.size):
             solver.SetNodeSupply(i, np.asscalar(supplies[i]))
         logger.debug('solving')
         if solver.Solve() == solver.OPTIMAL:
             solution = SolutionMap()
             logger.debug('building solution map')
-            start = dt.now()
             logger.debug(f'processing {solver.NumArcs()} arcs')
-            interval = int(solver.NumArcs() / 20)
-            for arc in range(solver.NumArcs()):
-                if 0 < solver.Tail(arc) <= len(ref_map) and solver.Head(arc) != len(
-                        arcs):
-                    if solver.Flow(arc) > 0:
-                        pixel = ref_map.worker(solver.Tail(arc))
-                        comp = comp_map.task(solver.Head(arc),
-                                             len(ref_map))
-                        combined_value = CombinedEntry(path=comp.key, target=pixel.value)
-                        solution.add(pixel.key, combined_value)
-                if arc % interval == 0:
-                    avg = (dt.now() - start).total_seconds() / (arc + 1)
-                    rate = round(1 / avg, 1)
-                    etr = timedelta(seconds=avg * (solver.NumArcs() - (arc + 1)))
-                    logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
+            with ProgressLogger(solver.NumArcs(), 20) as p:
+                for arc in range(solver.NumArcs()):
+                    if 0 < solver.Tail(arc) <= len(ref_map) and solver.Head(
+                            arc) != arc_count:
+                        if solver.Flow(arc) > 0:
+                            pixel = ref_map.worker(solver.Tail(arc))
+                            comp = comp_map.task(solver.Head(arc),
+                                                 len(ref_map))
+                            combined_value = CombinedEntry(path=comp.key,
+                                                           target=pixel.value)
+                            solution.add(pixel.key, combined_value)
+                    p.next()
             logger.debug('finished solving')
             return solution
         else:
