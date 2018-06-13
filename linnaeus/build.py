@@ -1,7 +1,6 @@
-import math
-
 import numpy as np
 from PIL import Image
+from numba import njit
 from ortools.graph import pywrapgraph
 from scipy import sparse
 from sklearn.metrics.pairwise import pairwise_distances
@@ -10,23 +9,24 @@ from .config import ProgressLogger, constants, logger
 from .models import CombinedEntry, Component, SolutionMap
 
 
-def start_nodes(rows, cols):
-    logger.debug('finding start nodes')
-    return sparse.hstack(
-        (np.zeros(rows), np.repeat(np.arange(1, rows + 1), cols),
-         np.arange(rows + 1, rows + cols + 1))).T
+@njit
+def plus(i, j):
+    return i + j
 
 
-def end_nodes(rows, cols):
-    logger.debug('finding end nodes')
-    return sparse.hstack((np.arange(1, rows + 1),
-                          np.tile(np.arange(rows + 1, rows + cols + 1), rows),
-                          np.repeat(rows + cols + 1, cols))).T
+@njit
+def minus(i, j):
+    return i - j
 
 
-def costs(rows, cols, cost_matrix):
-    logger.debug('finding arc costs')
-    return sparse.hstack((np.zeros(rows), cost_matrix.flatten(), np.zeros(cols))).T
+@njit
+def multiply(i, j):
+    return i * j
+
+
+@njit
+def get_ints(*x):
+    return x
 
 
 class Builder(object):
@@ -40,7 +40,7 @@ class Builder(object):
         logger.debug('calculating cost matrix')
         xy = pairwise_distances(ref_records, comp_records)
         logger.debug('calculated distances - now normalising')
-        cm = xy - xy.min()
+        cm = (xy - xy.min()).astype(int)
         logger.debug('finished calculating cost matrix')
         return cm
 
@@ -50,30 +50,49 @@ class Builder(object):
         comp_map.done()
         cost_matrix = cls.cost_matrix(ref_map, comp_map)
         rows, cols = cost_matrix.shape
+        cost_matrix = cost_matrix.reshape(-1, 1)
         arc_count = rows + cols + (rows * cols)
-        logger.debug(f'calculating {arc_count} arcs')
-        arcs = sparse.hstack((start_nodes(rows, cols), end_nodes(rows, cols),
-                              costs(rows, cols, cost_matrix)),
-                             format='csr').astype(int)
         supplies = np.concatenate(([rows], np.zeros(rows + cols), [-rows])).astype(int)
-        logger.debug('calculated arcs, now adding to solver')
+        logger.debug(f'adding {arc_count} arcs to solver ')
         solver = pywrapgraph.SimpleMinCostFlow()
         with ProgressLogger(arc_count, 20) as p:
-            block_size = 100000
-            for i in range(int(math.ceil(arc_count / block_size))):
-                start = i * block_size
-                end = min((i + 1) * block_size, arc_count + 1)
-                block = arcs[start:end].toarray()
-                for arc in block:
-                    solver.AddArcWithCapacityAndUnitCost(arc[0].item(), arc[1].item(), 1,
-                                                         arc[2].item())
+            last_node = rows + cols + 1
+            # section one
+            for i in range(1, rows + 1):
+                solver.AddArcWithCapacityAndUnitCost(0,
+                                                     i,
+                                                     1,
+                                                     0)
+                p.next()
+            # section two
+            colblock = np.arange(cols).reshape(-1, 1) + rows + 1
+            for r in range(rows):
+                rn = plus(r, 1)
+                block_start = multiply(r, cols)
+                block_end = plus(block_start, cols)
+                block = np.concatenate((colblock + block_start,
+                                        cost_matrix[block_start:block_end]), axis=1)
+                for block_row in block:
+                    c, cost = get_ints(*block_row)
+                    solver.AddArcWithCapacityAndUnitCost(rn,
+                                                         c,
+                                                         1,
+                                                         cost)
                     p.next()
-        del arcs
+            # section three
+            for i in range(rows + 1, last_node):
+                solver.AddArcWithCapacityAndUnitCost(
+                    i,
+                    last_node,
+                    1,
+                    0)
+                p.next()
         logger.debug('adding node supply')
         for i in range(supplies.size):
             solver.SetNodeSupply(i, np.asscalar(supplies[i]))
         logger.debug('solving')
-        if solver.Solve() == solver.OPTIMAL:
+        sol = solver.Solve()
+        if sol == solver.OPTIMAL:
             solution = SolutionMap()
             logger.debug('building solution map')
             logger.debug(f'processing {solver.NumArcs()} arcs')
@@ -92,6 +111,10 @@ class Builder(object):
             logger.debug('finished solving')
             return solution
         else:
+            codes = {getattr(solver, i): i for i in dir(solver) if
+                     not callable(getattr(solver, i)) and isinstance(getattr(solver, i),
+                                                                     int)}
+            print(codes[sol])
             raise Exception('failed to solve')
 
     @classmethod

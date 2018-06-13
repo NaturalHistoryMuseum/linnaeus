@@ -41,18 +41,15 @@ class ProgressLogger(object):
 
     def __enter__(self):
         self.start = dt.now()
-        self.last = dt.now()
         return self
 
     def next(self):
         self.current += 1
-        if self.current % self.interval == 0 or (
-                dt.now() - self.last).total_seconds() > self.max_seconds:
-            self.last = dt.now()
-            avg = (self.last - self.start).total_seconds() / self.current
+        if self.current % self.interval == 0:
+            avg = (dt.now() - self.start).total_seconds() / self.current
             rate = round(1 / avg, 1)
             etr = timedelta(seconds=avg * (self.total - self.current))
             logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        logger.debug(f'processed {self.total} items in {dt.now() - self.start}')
+        logger.debug(f'processed {self.current} items in {dt.now() - self.start}')
