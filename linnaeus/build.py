@@ -32,8 +32,6 @@ def get_ints(*x):
 class Builder(object):
     @classmethod
     def cost_matrix(cls, ref_map, comp_map):
-        ref_map.done()
-        comp_map.done()
         logger.debug('building arrays')
         ref_records = sparse.csr_matrix([r.value.array for r in ref_map.records])
         comp_records = sparse.csr_matrix([r.value.array for r in comp_map.records])
@@ -46,8 +44,11 @@ class Builder(object):
 
     @classmethod
     def solve(cls, ref_map, comp_map):
-        ref_map.done()
-        comp_map.done()
+        if len(comp_map) > constants.max_components:
+            logger.debug(
+                f'trying to use {len(comp_map)} components will likely result in a '
+                f'memory error: reducing to {constants.max_components}')
+            comp_map.reduce(constants.max_components)
         cost_matrix = cls.cost_matrix(ref_map, comp_map)
         rows, cols = cost_matrix.shape
         cost_matrix = cost_matrix.reshape(-1, 1)

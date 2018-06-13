@@ -1,4 +1,5 @@
 import abc
+import numpy as np
 import json
 
 from .entries import BaseEntry, CombinedEntry, CoordinateEntry, HsvEntry, LocationEntry
@@ -38,15 +39,21 @@ class BaseMap(abc.ABC):
     def __init__(self):
         self._records = []
         self._keys = set()
-        self._cache = False
+        self._cache = True
+        self._lock = True
         self._sortedrecords = None
 
     def __len__(self):
         return len(self._records)
 
-    def done(self):
-        # TODO: use a context manager to add records
+    def __enter__(self):
+        self._cache = False
+        self._lock = False
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._cache = True
+        self._lock = True
 
     @property
     def records(self):
@@ -72,6 +79,8 @@ class BaseMap(abc.ABC):
         return True
 
     def add(self, key: BaseEntry, value: BaseEntry):
+        if self._lock:
+            raise IOError('Locked.')
         record = MapRecord(key, value)
         if self.validate(record):
             self._records.append(record)
@@ -111,6 +120,11 @@ class ComponentMap(BaseMap):
         if str(record.key) in self._keys:
             raise KeyError('Duplicate key')
         return super(ComponentMap, self).validate(record)
+
+    def reduce(self, target):
+        self._sortedrecords = None
+        self._records = np.random.choice(self._records, target, replace=False).tolist()
+        self._keys = [str(r.key) for r in self._records]
 
 
 class SolutionMap(ReferenceMap):
