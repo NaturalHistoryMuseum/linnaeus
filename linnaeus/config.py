@@ -13,7 +13,7 @@ class Config(object):
                 config_dict = yaml.safe_load(f)
         else:
             config_dict = {}
-        self.max_components = config_dict.get('max_components', 100000)
+        self.max_components = config_dict.get('max_components', 80000)
         self.pixel_width = config_dict.get('pixel_width', 50)
         self.pixel_height = config_dict.get('pixel_height', 50)
         self.pixel_size = (self.pixel_width, self.pixel_height)

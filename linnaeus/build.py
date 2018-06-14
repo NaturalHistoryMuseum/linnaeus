@@ -66,12 +66,12 @@ class Builder(object):
                                                      0)
                 p.next()
             # section two
-            colblock = np.arange(cols).reshape(-1, 1) + rows + 1
+            colblock = np.arange(rows + 1, rows + cols + 1).reshape(-1, 1)
             for r in range(rows):
                 rn = plus(r, 1)
                 block_start = multiply(r, cols)
                 block_end = plus(block_start, cols)
-                block = np.concatenate((colblock + block_start,
+                block = np.concatenate((colblock,
                                         cost_matrix[block_start:block_end]), axis=1)
                 for block_row in block:
                     c, cost = get_ints(*block_row)
@@ -94,10 +94,9 @@ class Builder(object):
         logger.debug('solving')
         sol = solver.Solve()
         if sol == solver.OPTIMAL:
-            solution = SolutionMap()
             logger.debug('building solution map')
             logger.debug(f'processing {solver.NumArcs()} arcs')
-            with ProgressLogger(solver.NumArcs(), 20) as p:
+            with ProgressLogger(solver.NumArcs(), 20) as p, SolutionMap() as solution:
                 for arc in range(solver.NumArcs()):
                     if 0 < solver.Tail(arc) <= len(ref_map) and solver.Head(
                             arc) != arc_count:
@@ -109,8 +108,8 @@ class Builder(object):
                                                            target=pixel.value)
                             solution.add(pixel.key, combined_value)
                     p.next()
-            logger.debug('finished solving')
-            return solution
+                logger.debug('finished solving')
+                return solution
         else:
             codes = {getattr(solver, i): i for i in dir(solver) if
                      not callable(getattr(solver, i)) and isinstance(getattr(solver, i),
