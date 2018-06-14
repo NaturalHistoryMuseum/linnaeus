@@ -80,18 +80,18 @@ class ReferenceMapFactory:
             w = int(w * adjust)
             h = int(h * adjust)
             img = img.resize((w, h))
-        new_map = ReferenceMap()
         pixels = np.array(img)
         r = 0
-        for row in cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL):
-            c = 0
-            for col in row:
-                rk = CoordinateEntry(c, r)
-                rv = HsvEntry(*[np.asscalar(i) for i in col])
-                new_map.add(rk, rv)
-                c += 1
-            r += 1
-        return new_map
+        with ReferenceMap() as new_map:
+            for row in cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL):
+                c = 0
+                for col in row:
+                    rk = CoordinateEntry(c, r)
+                    rv = HsvEntry(*[np.asscalar(i) for i in col])
+                    new_map.add(rk, rv)
+                    c += 1
+                r += 1
+            return new_map
 
     @classmethod
     def from_image_local(cls, filepath):
@@ -135,12 +135,12 @@ class ReferenceMapFactory:
         :return: ReferenceMap
         """
         content = json.loads(txt)
-        new_map = ReferenceMap()
-        for k, v in content.items():
-            rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
-            rv = HsvEntry(*[tryint(i) for i in v])
-            new_map.add(rk, rv)
-        return new_map
+        with ReferenceMap() as new_map:
+            for k, v in content.items():
+                rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
+                rv = HsvEntry(*[tryint(i) for i in v])
+                new_map.add(rk, rv)
+            return new_map
 
 
 class ComponentMapFactory:
@@ -151,12 +151,12 @@ class ComponentMapFactory:
         :param components: list of Component objects
         :return: ComponentMap
         """
-        new_map = ComponentMap()
-        for c in components:
-            rk = LocationEntry(c.location)
-            rv = HsvEntry(*c.dominant)
-            new_map.add(rk, rv)
-        return new_map
+        with ComponentMap() as new_map:
+            for c in components:
+                rk = LocationEntry(c.location)
+                rv = HsvEntry(*c.dominant)
+                new_map.add(rk, rv)
+            return new_map
 
     @classmethod
     def from_local(cls, files=None, folders=None):
@@ -228,12 +228,12 @@ class ComponentMapFactory:
         :return: ComponentMap
         """
         content = json.loads(txt)
-        new_map = ComponentMap()
-        for k, v in content.items():
-            rk = LocationEntry(k)
-            rv = HsvEntry(*[tryint(i) for i in v])
-            new_map.add(rk, rv)
-        return new_map
+        with ComponentMap() as new_map:
+            for k, v in content.items():
+                rk = LocationEntry(k)
+                rv = HsvEntry(*[tryint(i) for i in v])
+                new_map.add(rk, rv)
+            return new_map
 
 
 class SolutionMapFactory:
@@ -245,11 +245,11 @@ class SolutionMapFactory:
         :return: SolutionMap
         """
         content = json.loads(txt)
-        new_map = SolutionMap()
-        for k, v in content.items():
-            rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
-            rv = CombinedEntry(**{
-                ek: SolutionMap.combined_types[ek](*ev) if isinstance(ev, list) else
-                SolutionMap.combined_types[ek](ev) for ek, ev in v.items()})
-            new_map.add(rk, rv)
-        return new_map
+        with SolutionMap() as new_map:
+            for k, v in content.items():
+                rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
+                rv = CombinedEntry(**{
+                    ek: SolutionMap.combined_types[ek](*ev) if isinstance(ev, list) else
+                    SolutionMap.combined_types[ek](ev) for ek, ev in v.items()})
+                new_map.add(rk, rv)
+            return new_map
