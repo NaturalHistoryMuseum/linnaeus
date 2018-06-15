@@ -11,7 +11,8 @@ class API(object):
     @classmethod
     def get_result(cls, response):
         j = response.json()
-        if response.ok and j.get('success', False):
+        if response.ok and j.get('success', False) and j.get('result', {}).get('total',
+                                                                               0) > 0:
             return j.get('result', j)
         else:
             return None
@@ -59,7 +60,10 @@ class ResultsIterator(object):
         if not r.ok:
             raise StopIteration
         result = API.get_result(r)
-        if result is None or (self.records_only and 'records' not in result):
+        if result is None or (
+                self.records_only and 'records' not in result) or self.offset >= \
+                result.get(
+                'total', 0):
             raise StopIteration
         else:
             self.offset += len(result['records'])

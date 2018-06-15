@@ -1,5 +1,6 @@
 import os
 from types import SimpleNamespace
+import json
 
 _local_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/')
 
@@ -13,3 +14,8 @@ urls = SimpleNamespace(portal_image='http://www.nhm.ac.uk/services/media-store/a
 serialised = SimpleNamespace(ref='{"1|1":[255,255,255]}',
                              comp='{"assetid":[255,255,255]}',
                              invalid='{"0|0|0":[300,300,300]}')
+
+with open(_local_root + 'portal-response.json', 'r') as f:
+    _portal = f.read()
+
+responses = SimpleNamespace(portal=_portal)

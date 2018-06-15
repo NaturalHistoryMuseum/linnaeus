@@ -1,7 +1,8 @@
-from unittest.mock import patch
-
 import nose.tools as nosetools
 import requests
+import requests_mock
+from unittest.mock import patch
+import re
 
 from linnaeus.factories import MapFactory
 from linnaeus.models import ComponentMap, ReferenceMap
@@ -71,7 +72,12 @@ class TestComponentMapFactory:
         nosetools.assert_is_instance(comp_map, ComponentMap)
         nosetools.assert_greater(len(comp_map), 0)
 
-    def test_from_api(self):
-        comp_map = MapFactory.component().from_portal(query='black', collectionCode='min', country='France')
+    @requests_mock.Mocker(real_http=True)
+    def test_from_api(self, m):
+        api_rgx = re.compile('data.nhm.ac.uk/api')
+        m.get(api_rgx, text=helpers.responses.portal)
+        comp_map = MapFactory.component().from_portal(query='black',
+                                                      collectionCode='min',
+                                                      country='France')
         nosetools.assert_is_instance(comp_map, ComponentMap)
         nosetools.assert_greater(len(comp_map), 0)

@@ -1,0 +1,655 @@
+{
+  "help": "Search a DataStore resource.\n\n    The datastore_search action allows you to search data in a resource.\n    DataStore resources that belong to private CKAN resource can only be\n    read by you if you have access to the CKAN resource and send the appropriate\n    authorization.\n\n    :param resource_id: id or alias of the resource to be searched against\n    :type resource_id: string\n    :param filters: matching conditions to select, e.g {\"key1\": \"a\", \"key2\": \"b\"} (optional)\n    :type filters: dictionary\n    :param q: full text query. If it's a string, it'll search on all fields on\n              each row. If it's a dictionary as {\"key1\": \"a\", \"key2\": \"b\"},\n              it'll search on each specific field (optional)\n    :type q: string or dictionary\n    :param distinct: return only distinct rows (optional, default: false)\n    :type distinct: bool\n    :param plain: treat as plain text query (optional, default: true)\n    :type plain: bool\n    :param language: language of the full text query (optional, default: english)\n    :type language: string\n    :param limit: maximum number of rows to return (optional, default: 100)\n    :type limit: int\n    :param offset: offset this number of rows (optional)\n    :type offset: int\n    :param fields: fields to return (optional, default: all fields in original order)\n    :type fields: list or comma separated string\n    :param sort: comma separated field names with ordering\n                 e.g.: \"fieldname1, fieldname2 desc\"\n    :param count: If True, the result will include a 'total' field\n                  to the total number of matching rows. (optional, default: True)\n    :type sort: string\n\n    Setting the ``plain`` flag to false enables the entire PostgreSQL `full text search query language`_.\n\n    A listing of all available resources can be found at the alias ``_table_metadata``.\n\n    .. _full text search query language: http://www.postgresql.org/docs/9.1/static/datatype-textsearch.html#DATATYPE-TSQUERY\n\n    If you need to download the full resource, read :ref:`dump`.\n\n    **Results:**\n\n    The result of this action is a dictionary with the following keys:\n\n    :rtype: A dictionary with the following keys\n    :param fields: fields/columns and their extra metadata\n    :type fields: list of dictionaries\n    :param offset: query offset value\n    :type offset: int\n    :param limit: query limit value\n    :type limit: int\n    :param filters: query filters\n    :type filters: list of dictionaries\n    :param total: number of total matching records\n    :type total: int\n    :param records: list of matching results\n    :type records: list of dictionaries\n\n    ",
+  "success": true,
+  "result": {
+    "records": [
+      {
+        "institutionCode": "NHMUK",
+        "decimalLatitude": "45.6560736",
+        "verbatimLatitude": "45 39 21.865 N",
+        "associatedMedia": "[{\"mime\": \"jpeg\", \"type\": \"StillImage\", \"title\": \"F.Wall, Auvergne Peperites - photo of hand specimen BM.2005,P5(24)\", \"assetID\": \"7e543987cac76dfc84f032f53911da2d32ba0dd9\", \"license\": \"http://creativecommons.org/licenses/by/4.0/\", \"category\": \"Specimen\", \"identifier\": \"http://www.nhm.ac.uk/services/media-store/asset/7e543987cac76dfc84f032f53911da2d32ba0dd9/contents/preview\", \"rightsHolder\": \"The Trustees of the Natural History Museum, London\"}]",
+        "continent": "Europe",
+        "occurrenceID": "1aa4d898-4910-4cf2-b126-82ce03a67a71",
+        "basisOfRecord": "Specimen",
+        "identificationDescription": "[\"4 fragments of peperite, fine yellow-grey micritic matrix with layering, not graded, defined by colour and/or lapilli size and/or frequency. Silicate fragments matrix-supported, angular and irregular, from silt to grit size, grey and black coloured.  .\", \"Also contains black glassy fragments.\"]",
+        "stateProvince": "Auvergne",
+        "otherCatalogNumbers": "NHMUK:ecatalogue:417982",
+        "geom": "45.6560736,3.177034099",
+        "catalogNumber": "BM.2005,P5(24)",
+        "verbatimLongitude": "003 10 37.322 E",
+        "imageCategory": [
+          "Specimen"
+        ],
+        "dateRegistered": "2006-10-04",
+        "identificationAsRegistered": "Peperite",
+        "collectionCode": "MIN",
+        "higherGeography": "Europe; France; Auvergne",
+        "fieldNumber": "23b",
+        "_version_": "1603149316715708417",
+        "individualCount": "4",
+        "collectionKind": "Petrology",
+        "created": "2006-10-04",
+        "country": "France",
+        "donorName": "Dr Frances Wall",
+        "modified": "2018-01-25",
+        "decimalLongitude": "3.177034099",
+        "scientificName": "Peperite",
+        "_id": 417982
+      },
+      {
+        "_version_": "1603148479231688704",
+        "donorName": "A G. Nicholson",
+        "_id": 309697,
+        "occurrenceID": "98f346c0-1d79-4a3b-8e15-b9a336277e13",
+        "basisOfRecord": "Specimen",
+        "identificationDescription": "A breccia of angular black fragments in white calcite. the figuring is less handsome and more confused than that of no. 105 and the black tends to grey",
+        "institutionCode": "NHMUK",
+        "created": "2005-09-28",
+        "identificationAsRegistered": "Grande antique",
+        "collectionCode": "MIN",
+        "higherGeography": "Europe; France",
+        "modified": "2018-02-01",
+        "associatedMedia": "[{\"mime\": \"tiff\", \"type\": \"StillImage\", \"title\": \"nic.0625.tif\", \"assetID\": \"79ba059c3cadc764672089b2f22b838c34007c0e\", \"license\": \"http://creativecommons.org/licenses/by/4.0/\", \"category\": \"Specimen\", \"identifier\": \"http://www.nhm.ac.uk/services/media-store/asset/79ba059c3cadc764672089b2f22b838c34007c0e/contents/preview\", \"rightsHolder\": \"The Trustees of the Natural History Museum, London\"}]",
+        "otherCatalogNumbers": "NHMUK:ecatalogue:309697",
+        "fieldNumber": "Nic.0625",
+        "catalogNumber": "BM.1985,Nic625",
+        "collectionKind": "Building stones",
+        "country": "France",
+        "continent": "Europe",
+        "imageCategory": [
+          "Specimen"
+        ],
+        "scientificName": "Grande antique"
+      },
+      {
+        "institutionCode": "NHMUK",
+        "decimalLatitude": "45.6560736",
+        "verbatimLatitude": "45 39 21.865 N",
+        "associatedMedia": "[{\"mime\": \"jpeg\", \"type\": \"StillImage\", \"title\": \"F.Wall, Auvergne Peperites - photo of hand specimen BM.2005,P5(7)\", \"assetID\": \"57fcb9af0bba713507476c22ed64741b563b9a93\", \"license\": \"http://creativecommons.org/licenses/by/4.0/\", \"category\": \"Specimen\", \"identifier\": \"http://www.nhm.ac.uk/services/media-store/asset/57fcb9af0bba713507476c22ed64741b563b9a93/contents/preview\", \"rightsHolder\": \"The Trustees of the Natural History Museum, London\"}]",
+        "continent": "Europe",
+        "occurrenceID": "f386fc28-4b4a-49de-b8d6-dc562d26d8ac",
+        "basisOfRecord": "Specimen",
+        "identificationDescription": "2 samples; matrix completely recrystallised to sparry calcite, some vugs.  Igneous lapilli angular to well rounded, poorly sorted, 1 mm - 1 cm, black and fine-grained.  Infrequent individual black xenocrysts to 2 mm ?amphibole.",
+        "stateProvince": "Auvergne",
+        "otherCatalogNumbers": "NHMUK:ecatalogue:417965",
+        "geom": "45.6560736,3.177034099",
+        "catalogNumber": "BM.2005,P5(7)",
+        "verbatimLongitude": "003 10 37.322 E",
+        "imageCategory": [
+          "Specimen"
+        ],
+        "dateRegistered": "2006-10-04",
+        "identificationAsRegistered": "Peperite",
+        "collectionCode": "MIN",
+        "higherGeography": "Europe; France; Auvergne",
+        "fieldNumber": "7",
+        "_version_": "1603149568641335296",
+        "individualCount": "2",
+        "collectionKind": "Petrology",
+        "created": "2006-10-04",
+        "country": "France",
+        "donorName": "Dr Frances Wall",
+        "modified": "2018-01-25",
+        "decimalLongitude": "3.177034099",
+        "scientificName": "Peperite",
+        "_id": 417965
+      },
+      {
+        "_version_": "1603148135181320192",
+        "_id": 302420,
+        "occurrenceID": "707f95f2-a41b-4c5d-8449-1e6362c54106",
+        "basisOfRecord": "Specimen",
+        "identificationDescription": "Black with coarse white veins",
+        "institutionCode": "NHMUK",
+        "created": "2005-09-28",
+        "identificationAsRegistered": "Izeste marble",
+        "collectionCode": "MIN",
+        "higherGeography": "Europe; France",
+        "modified": "2018-02-01",
+        "associatedMedia": "[{\"mime\": \"tiff\", \"type\": \"StillImage\", \"title\": \"e9471.tif\", \"assetID\": \"aa641ffeb189aa43f5ea2ff999e12d4e7426611f\", \"license\": \"http://creativecommons.org/licenses/by/4.0/\", \"category\": \"Specimen\", \"identifier\": \"http://www.nhm.ac.uk/services/media-store/asset/aa641ffeb189aa43f5ea2ff999e12d4e7426611f/contents/preview\", \"rightsHolder\": \"The Trustees of the Natural History Museum, London\"}]",
+        "otherCatalogNumbers": "NHMUK:ecatalogue:302420",
+        "scientificName": "Izeste marble",
+        "catalogNumber": "BM.1985,E9471",
+        "collectionKind": "Building stones",
+        "country": "France",
+        "continent": "Europe",
+        "imageCategory": [
+          "Specimen"
+        ]
+      },
+      {
+        "_version_": "1603148167914717186",
+        "scientificName": "Grand antique du nord",
+        "_id": 304543,
+        "occurrenceID": "fbc37951-431c-4199-a50f-de2f00185e2d",
+        "basisOfRecord": "Specimen",
+        "identificationDescription": "Black with coarse white veins",
+        "institutionCode": "NHMUK",
+        "created": "2005-09-28",
+        "identificationAsRegistered": "Grand antique du nord",
+        "collectionCode": "MIN",
+        "higherGeography": "Europe; France",
+        "modified": "2018-02-01",
+        "associatedMedia": "[{\"mime\": \"tiff\", \"type\": \"StillImage\", \"title\": \"e11592.tif\", \"assetID\": \"f2f27e9fc0d1464dabd9f9c301ee035d01f90a7a\", \"license\": \"http://creativecommons.org/licenses/by/4.0/\", \"category\": \"Specimen\", \"identifier\": \"http://www.nhm.ac.uk/services/media-store/asset/f2f27e9fc0d1464dabd9f9c301ee035d01f90a7a/contents/preview\", \"rightsHolder\": \"The Trustees of the Natural History Museum, London\"}]",
+        "otherCatalogNumbers": "NHMUK:ecatalogue:304543",
+        "fieldNumber": "LNHS.",
+        "catalogNumber": "BM.1985,E11592",
+        "collectionKind": "Building stones",
+        "country": "France",
+        "continent": "Europe",
+        "imageCategory": [
+          "Specimen"
+        ]
+      }
+    ],
+    "total": 5,
+    "_backend": "datasolr",
+    "fields": [
+      {
+        "type": "text",
+        "id": "minimumDepthInMeters"
+      },
+      {
+        "type": "text",
+        "id": "mineralComplex"
+      },
+      {
+        "type": "text",
+        "id": "verbatimLatitude"
+      },
+      {
+        "type": "text",
+        "id": "month"
+      },
+      {
+        "type": "text",
+        "id": "continent"
+      },
+      {
+        "type": "text",
+        "id": "collectionName"
+      },
+      {
+        "type": "text",
+        "id": "group"
+      },
+      {
+        "type": "text",
+        "id": "family"
+      },
+      {
+        "type": "semiColonDelimited",
+        "id": "gbifIssue"
+      },
+      {
+        "type": "text",
+        "id": "latestEpochOrHighestSeries"
+      },
+      {
+        "type": "text",
+        "id": "texture"
+      },
+      {
+        "type": "text",
+        "id": "recoveryWeight"
+      },
+      {
+        "type": "text",
+        "id": "maximumDepthInMeters"
+      },
+      {
+        "type": "text",
+        "id": "verbatimLongitude"
+      },
+      {
+        "type": "text",
+        "id": "meteoriteGroup"
+      },
+      {
+        "type": "text",
+        "id": "kingdom"
+      },
+      {
+        "type": "text",
+        "id": "decimalLatitude"
+      },
+      {
+        "type": "text",
+        "id": "earliestEraOrLowestErathem"
+      },
+      {
+        "type": "text",
+        "id": "identificationAsRegistered"
+      },
+      {
+        "type": "text",
+        "id": "infraspecificEpithet"
+      },
+      {
+        "type": "text",
+        "id": "lithostratigraphy"
+      },
+      {
+        "type": "text",
+        "id": "latestEraOrHighestErathem"
+      },
+      {
+        "type": "text",
+        "id": "recordNumber"
+      },
+      {
+        "type": "text",
+        "id": "day"
+      },
+      {
+        "type": "text",
+        "id": "individualCount"
+      },
+      {
+        "type": "text",
+        "id": "donorName"
+      },
+      {
+        "type": "text",
+        "id": "lifeStage"
+      },
+      {
+        "type": "text",
+        "id": "chondriteAchondrite"
+      },
+      {
+        "type": "text",
+        "id": "exsiccata"
+      },
+      {
+        "type": "text",
+        "id": "plantDescription"
+      },
+      {
+        "type": "text",
+        "id": "scientificName"
+      },
+      {
+        "type": "text",
+        "id": "lowestBiostratigraphicZone"
+      },
+      {
+        "type": "text",
+        "id": "occurrence"
+      },
+      {
+        "type": "text",
+        "id": "habitat"
+      },
+      {
+        "type": "text",
+        "id": "identificationVariety"
+      },
+      {
+        "type": "text",
+        "id": "setMark"
+      },
+      {
+        "type": "text",
+        "id": "sex"
+      },
+      {
+        "type": "text",
+        "id": "scientificNameAuthorship"
+      },
+      {
+        "type": "text",
+        "id": "year"
+      },
+      {
+        "type": "text",
+        "id": "chronostratigraphy"
+      },
+      {
+        "type": "text",
+        "id": "basisOfRecord"
+      },
+      {
+        "type": "text",
+        "id": "latestEonOrHighestEonothem"
+      },
+      {
+        "type": "text",
+        "id": "otherCatalogNumbers"
+      },
+      {
+        "type": "text",
+        "id": "latestPeriodOrHighestSystem"
+      },
+      {
+        "type": "geospatial_rpt",
+        "id": "geom"
+      },
+      {
+        "type": "text",
+        "id": "kindOfCollection"
+      },
+      {
+        "type": "text",
+        "id": "specificEpithet"
+      },
+      {
+        "type": "text",
+        "id": "dateRegistered"
+      },
+      {
+        "type": "text",
+        "id": "identificationOther"
+      },
+      {
+        "type": "text",
+        "id": "geodeticDatum"
+      },
+      {
+        "type": "text",
+        "id": "barcode"
+      },
+      {
+        "type": "text",
+        "id": "collectionCode"
+      },
+      {
+        "type": "text",
+        "id": "higherGeography"
+      },
+      {
+        "type": "text",
+        "id": "latestAgeOrHighestStage"
+      },
+      {
+        "type": "text",
+        "id": "determinationNames"
+      },
+      {
+        "type": "text",
+        "id": "fieldNumber"
+      },
+      {
+        "type": "text",
+        "id": "earliestEpochOrLowestSeries"
+      },
+      {
+        "type": "text",
+        "id": "occurrenceID"
+      },
+      {
+        "type": "text",
+        "id": "highestBiostratigraphicZone"
+      },
+      {
+        "type": "text",
+        "id": "petrologyType"
+      },
+      {
+        "type": "text",
+        "id": "earliestAgeOrLowestStage"
+      },
+      {
+        "type": "date",
+        "id": "created"
+      },
+      {
+        "type": "text",
+        "id": "country"
+      },
+      {
+        "type": "text",
+        "id": "meteoriteType"
+      },
+      {
+        "type": "text",
+        "id": "decimalLongitude"
+      },
+      {
+        "type": "text",
+        "id": "populationCode"
+      },
+      {
+        "type": "text",
+        "id": "formation"
+      },
+      {
+        "type": "text",
+        "id": "genus"
+      },
+      {
+        "type": "text",
+        "id": "preparationType"
+      },
+      {
+        "type": "text",
+        "id": "clutchSize"
+      },
+      {
+        "type": "text",
+        "id": "associatedMedia"
+      },
+      {
+        "type": "text",
+        "id": "phylum"
+      },
+      {
+        "type": "text",
+        "id": "subDepartment"
+      },
+      {
+        "type": "text",
+        "id": "vessel"
+      },
+      {
+        "type": "text",
+        "id": "kindOfObject"
+      },
+      {
+        "type": "text",
+        "id": "higherClassification"
+      },
+      {
+        "type": "text",
+        "id": "islandGroup"
+      },
+      {
+        "type": "text",
+        "id": "identificationDescription"
+      },
+      {
+        "type": "text",
+        "id": "resuspendedIn"
+      },
+      {
+        "type": "text",
+        "id": "catalogNumber"
+      },
+      {
+        "type": "text",
+        "id": "waterBody"
+      },
+      {
+        "type": "text",
+        "id": "exsiccataNumber"
+      },
+      {
+        "type": "text",
+        "id": "preparations"
+      },
+      {
+        "type": "text",
+        "id": "identificationQualifier"
+      },
+      {
+        "type": "text",
+        "id": "maximumElevationInMeters"
+      },
+      {
+        "type": "text",
+        "id": "determinationFiledAs"
+      },
+      {
+        "type": "text",
+        "id": "earliestEonOrLowestEonothem"
+      },
+      {
+        "type": "date",
+        "id": "modified"
+      },
+      {
+        "type": "text",
+        "id": "bed"
+      },
+      {
+        "type": "text",
+        "id": "project"
+      },
+      {
+        "type": "text",
+        "id": "island"
+      },
+      {
+        "type": "text",
+        "id": "minimumElevationInMeters"
+      },
+      {
+        "type": "text",
+        "id": "totalVolume"
+      },
+      {
+        "type": "text",
+        "id": "subgenus"
+      },
+      {
+        "type": "text",
+        "id": "petrologySubtype"
+      },
+      {
+        "type": "text",
+        "id": "expedition"
+      },
+      {
+        "type": "text",
+        "id": "institutionCode"
+      },
+      {
+        "type": "text",
+        "id": "mine"
+      },
+      {
+        "type": "text",
+        "id": "gbifID"
+      },
+      {
+        "type": "text",
+        "id": "identifiedBy"
+      },
+      {
+        "type": "text",
+        "id": "earliestPeriodOrLowestSystem"
+      },
+      {
+        "type": "text",
+        "id": "preservative"
+      },
+      {
+        "type": "text",
+        "id": "georeferenceProtocol"
+      },
+      {
+        "type": "text",
+        "id": "recovery"
+      },
+      {
+        "type": "text",
+        "id": "locality"
+      },
+      {
+        "type": "text",
+        "id": "stateProvince"
+      },
+      {
+        "type": "text",
+        "id": "member"
+      },
+      {
+        "type": "text",
+        "id": "taxonRank"
+      },
+      {
+        "type": "semiColonDelimited",
+        "id": "imageCategory"
+      },
+      {
+        "type": "text",
+        "id": "catalogueDescription"
+      },
+      {
+        "type": "text",
+        "id": "depositType"
+      },
+      {
+        "type": "text",
+        "id": "recoveryDate"
+      },
+      {
+        "type": "text",
+        "id": "typeStatus"
+      },
+      {
+        "type": "text",
+        "id": "samplingProtocol"
+      },
+      {
+        "type": "text",
+        "id": "class"
+      },
+      {
+        "type": "text",
+        "id": "collectionKind"
+      },
+      {
+        "type": "text",
+        "id": "commodity"
+      },
+      {
+        "type": "text",
+        "id": "partType"
+      },
+      {
+        "type": "text",
+        "id": "determinationTypes"
+      },
+      {
+        "type": "text",
+        "id": "observedWeight"
+      },
+      {
+        "type": "text",
+        "id": "registrationCode"
+      },
+      {
+        "type": "text",
+        "id": "recordedBy"
+      },
+      {
+        "type": "int",
+        "id": "_id"
+      },
+      {
+        "type": "text",
+        "id": "extractionMethod"
+      },
+      {
+        "type": "text",
+        "id": "order"
+      },
+      {
+        "type": "text",
+        "id": "meteoriteClass"
+      }
+    ],
+    "resource_id": "05ff2255-c38a-40c9-b657-4ccb55ab2feb"
+  }
+}
