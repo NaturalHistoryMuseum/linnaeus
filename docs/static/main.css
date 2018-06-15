@@ -1,0 +1,44 @@
+@import url("https://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans");
+body {
+  font-family: "Open Sans", sans-serif;
+  background-color: #EDEDDF;
+  color: #513E30; }
+
+.nav-link, .navbar-brand, h1, h2 {
+  font-family: "Playfair Display", sans-serif; }
+
+.bg-dark {
+  background-color: #C44D58 !important; }
+
+h1 {
+  color: #AE0439; }
+
+.navbar-dark *, a:hover {
+  color: #dbdbbe; }
+
+.active {
+  border-bottom: 2px solid #dbdbbe; }
+
+.loupe {
+  background: rgba(0, 0, 0, 0) no-repeat;
+  border-radius: 5px;
+  width: 150px;
+  height: 150px;
+  top: -75px;
+  left: -75px; }
+
+.zoom-src {
+  transition: opacity 0.3s; }
+  .zoom-src:hover {
+    opacity: 0.7; }
+
+.site-content {
+  padding-top: 6rem; }
+
+.navbar-nav {
+  justify-content: space-between;
+  width: 100%; }
+
+.center-content {
+  display: flex;
+  justify-content: space-around; }
