@@ -1,5 +1,8 @@
 # linnaeus
 
+[![Travis](https://img.shields.io/travis/NaturalHistoryMuseum/linnaeus.svg?style=flat-square)](https://travis-ci.org/NaturalHistoryMuseum/linnaeus)
+[![Coveralls github](https://img.shields.io/coveralls/github/NaturalHistoryMuseum/linnaeus.svg?style=flat-square)](https://coveralls.io/github/NaturalHistoryMuseum/linnaeus)
+
 This project will take a reference image and recreate it using a set of component images as 'pixels'.
 
 ### Why linnaeus?
