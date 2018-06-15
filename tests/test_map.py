@@ -65,26 +65,29 @@ class TestComponentMap:
     def _add_records(self):
         keys = [LocationEntry(i) for i in 'abcd']
         values = [HsvEntry(*i) for i in [(0, 0, 0), (1, 1, 1), (2, 2, 2), (0, 2, 1)]]
-        for k, v in zip(keys, values):
-            self.map.add(k, v)
+        with self.map as m:
+            for k, v in zip(keys, values):
+                m.add(k, v)
         self.serialised = '{"a": [0, 0, 0], "b": [1, 1, 1], "c": [2, 2, 2], ' \
                           '"d": [0, 2, 1]}'
 
     def test_add_records(self):
-        self.map.add(LocationEntry('random key'), HsvEntry(0, 0, 0))
-        with nosetools.assert_raises(ValueError):
-            self.map.add(LocationEntry('values too high'), HsvEntry(3000, 3000, 3000))
-        with nosetools.assert_raises(ValueError):
-            self.map.add(LocationEntry('negative values'), HsvEntry(-1, -2, -3))
-        with nosetools.assert_raises(KeyError):
-            self.map.add(LocationEntry('random key'), HsvEntry(1, 1, 1))
-        with nosetools.assert_raises(TypeError):
-            self.map.add(LocationEntry(0), HsvEntry(0, 0, 0))
+        with self.map as m:
+            m.add(LocationEntry('random key'), HsvEntry(0, 0, 0))
+            with nosetools.assert_raises(ValueError):
+                m.add(LocationEntry('values too high'), HsvEntry(3000, 3000, 3000))
+            with nosetools.assert_raises(ValueError):
+                m.add(LocationEntry('negative values'), HsvEntry(-1, -2, -3))
+            with nosetools.assert_raises(KeyError):
+                m.add(LocationEntry('random key'), HsvEntry(1, 1, 1))
+            with nosetools.assert_raises(TypeError):
+                m.add(LocationEntry(0), HsvEntry(0, 0, 0))
 
     def test_add_many_records(self):
         start = dt.now()
-        for i in range(100000):
-            self.map.add(LocationEntry(str(i)), HsvEntry(0, 0, 0))
+        with self.map as m:
+            for i in range(100000):
+                m.add(LocationEntry(str(i)), HsvEntry(0, 0, 0))
         elapsed = (dt.now() - start).total_seconds()
         nosetools.assert_less(elapsed, 10)
 
@@ -104,28 +107,31 @@ class TestReferenceMap(TestComponentMap):
         self.map = ReferenceMap()
 
     def _add_records(self):
-        self.map.add(CoordinateEntry(0, 0), HsvEntry(0, 0, 0))
-        self.map.add(CoordinateEntry(1, 1), HsvEntry(1, 1, 1))
-        self.map.add(CoordinateEntry(0, 1), HsvEntry(2, 2, 2))
-        self.map.add(CoordinateEntry(2, 2), HsvEntry(0, 2, 1))
+        with self.map as m:
+            m.add(CoordinateEntry(0, 0), HsvEntry(0, 0, 0))
+            m.add(CoordinateEntry(1, 1), HsvEntry(1, 1, 1))
+            m.add(CoordinateEntry(0, 1), HsvEntry(2, 2, 2))
+            m.add(CoordinateEntry(2, 2), HsvEntry(0, 2, 1))
         self.serialised = '{"0|0": [0, 0, 0], "1|1": [1, 1, 1], "0|1": [2, 2, 2], ' \
                           '"2|2": [0, 2, 1]}'
 
     def test_add_records(self):
-        self.map.add(CoordinateEntry(0, 0), HsvEntry(0, 0, 0))
-        with nosetools.assert_raises(ValueError):
-            self.map.add(CoordinateEntry(1, 1), HsvEntry(3000, 3000, 3000))
-        with nosetools.assert_raises(ValueError):
-            self.map.add(CoordinateEntry(2, 2), HsvEntry(-1, -2, -3))
-        with nosetools.assert_raises(KeyError):
-            self.map.add(CoordinateEntry(0, 0), HsvEntry(1, 1, 1))
-        with nosetools.assert_raises(KeyError):
-            self.map.add(CoordinateEntry(1.2, 3), HsvEntry(0, 0, 0))
+        with self.map as m:
+            m.add(CoordinateEntry(0, 0), HsvEntry(0, 0, 0))
+            with nosetools.assert_raises(ValueError):
+                m.add(CoordinateEntry(1, 1), HsvEntry(3000, 3000, 3000))
+            with nosetools.assert_raises(ValueError):
+                m.add(CoordinateEntry(2, 2), HsvEntry(-1, -2, -3))
+            with nosetools.assert_raises(KeyError):
+                m.add(CoordinateEntry(0, 0), HsvEntry(1, 1, 1))
+            with nosetools.assert_raises(KeyError):
+                m.add(CoordinateEntry(1.2, 3), HsvEntry(0, 0, 0))
 
     def test_add_many_records(self):
         start = dt.now()
-        for i in range(100000):
-            self.map.add(CoordinateEntry(i, i), HsvEntry(0, 0, 0))
+        with self.map as m:
+            for i in range(100000):
+                m.add(CoordinateEntry(i, i), HsvEntry(0, 0, 0))
         elapsed = (dt.now() - start).total_seconds()
         nosetools.assert_less(elapsed, 10)
 
