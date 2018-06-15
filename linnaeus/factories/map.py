@@ -213,7 +213,7 @@ class ComponentMapFactory:
                 try:
                     r = requests.get(
                         asset.get('identifier').replace('preview', 'thumbnail'),
-                        timeout=2)
+                        timeout=10)
                     components.append(Component(Image.open(BytesIO(r.content)),
                                                 asset.get('identifier')))
                 except requests.ReadTimeout:
