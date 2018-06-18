@@ -43,13 +43,13 @@ To run the builder, you will need:
 - Optionally, a configuration file to override the default settings.
 
 The example uses this painting of Carl Linnaeus as a reference image:
-![Carl Linnaeus](docs/ref.jpg)
+![Carl Linnaeus](docs/static/images/ref.jpg)
 
 The component images are a subset of specimen images (roughly 15,000) downloaded from the NHM's [Data Portal](http://data.nhm.ac.uk), like this one:
 ![Odontopera bidentata](http://www.nhm.ac.uk/services/media-store/asset/7364c60db49610b3ec31d854f0972d20c61fcd0c/contents/thumbnail)
 
 Except cropped and resized to 50x50 squares (see the Formatter utility):
-![An array of resized specimen images](docs/specimens.jpg)
+![An array of resized specimen images](docs/static/images/specimens.jpg)
 
 The configuration file should be named `.config` and be inside your working directory. If you're fine with the defaults (shown below) then you don't have to have a config file.
 
@@ -201,7 +201,7 @@ Small confession: it does cheat a _little_ bit. The pixels are matched to the be
 
 Here's an example of this (unadjusted on the left, adjusted on the right):
 
-![Unadjusted vs adjusted output](docs/composite.jpg)
+![Unadjusted vs adjusted output](docs/static/images/comparison.jpg)
 
 If you don't want this behaviour, add `adjust=False` into the `Builder.fill()` method:
 

@@ -3,3 +3,4 @@ __pycache__
 *.npy
 *.prof
 .eggs/
+.idea

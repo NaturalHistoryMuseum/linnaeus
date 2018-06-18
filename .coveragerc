@@ -1,0 +1,8 @@
+[run]
+include=linnaeus/*
+
+[report]
+omit=
+    test*
+exclude_lines=
+    @abc.abstractmethod

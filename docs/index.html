@@ -31,7 +31,13 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link active" href="/"><h2>Linnaeus</h2></a>
+                    <a class="nav-link active" href="#" data-target="static/images/linnaeus.jpg"><h2>Linnaeus</h2></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-target="static/images/comparison.jpg"><h2>Comparison</h2></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-target="static/images/specimens.jpg"><h2>15000 Specimens</h2></a>
                 </li>
             </ul>
         </div>
@@ -43,10 +49,11 @@
         <div class="body-content">
             <div>
                 <div class="container center-content">
-                    <img src="80k_composite.jpg" alt="A painting of Carl Linnaeus recreated using images of specimens
+                    <img src="static/images/linnaeus.jpg" alt="An image recreated using images of specimens
                                   from the Natural History Museum." id="thumb"
                          class="img-fluid zoom-src" style="max-width: 500px;">
                 </div>
+                <p class="center-content"><small>Hover over the image and scroll in/out to zoom</small></p>
                 <br>
                 <h1>About</h1>
                 <hr>
@@ -95,10 +102,7 @@
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
 <script src="static/vendor/loupe.js"></script>
-
-<script type="text/javascript">
-    l = new Loupe(document.getElementById('thumb'));
-</script>
+<script src="static/main.js"></script>
 
 
 </body>
