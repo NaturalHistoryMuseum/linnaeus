@@ -1,8 +1,7 @@
 import logging
 import os
-from datetime import datetime as dt, timedelta
-
 import yaml
+from datetime import datetime as dt, timedelta
 
 
 class Config(object):
@@ -21,6 +20,8 @@ class Config(object):
         self.saturation_threshold = config_dict.get('saturation_threshold', 50)
         self.log_level = logging.getLevelName(
             config_dict.get('log_level', 'DEBUG').upper())
+        self.dominant_colour_method = config_dict.get('dominant_colour_method',
+                                                      'average')
 
 
 constants = Config()

@@ -7,7 +7,7 @@ from linnaeus.utils import Formatter
 
 
 class Component(object):
-    def __init__(self, img: Image, location = None):
+    def __init__(self, img: Image, location=None):
         if img.mode != 'RGB':
             img = img.convert('RGB')
         self.img = Formatter.resize(img)
@@ -18,10 +18,20 @@ class Component(object):
 
     def _get_dominant(self, f):
         hsv = common.hsv_pixels(self.img)
-        data = [tuple(p) for p in hsv if f(p)]
+        data = np.array([tuple(p) for p in hsv if f(p)])
         if len(data) == 0:
             return None, None, None
-        return np.array(data).mean(axis=0).astype(int).tolist()
+        if constants.dominant_colour_method == 'round':
+            rounded = (data / 10).round(0) * 10
+            freq = np.unique(rounded, axis=0, return_counts=True)
+            most_freq = freq[0][np.where(freq[1] == freq[1].max())]
+            mask = np.apply_along_axis(lambda x: x.tolist() in most_freq.tolist(), 1,
+                                       rounded)
+            dom = data[mask].mean(axis=0).astype(int).tolist()
+        else:
+            # avg
+            dom = data.mean(axis=0).astype(int).tolist()
+        return dom
 
     @property
     def dominant(self):

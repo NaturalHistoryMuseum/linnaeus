@@ -47,11 +47,14 @@ class Downloader(object):
     def search(query=None, **params):
         assets = []
         for page in API.assets(API.COLLECTIONS, 0, 100, query, **params):
-            if len(page) > 0:
-                for media in page:
-                    assets.append(media)
-            else:
-                continue
+            try:
+                if len(page) > 0:
+                    for media in page:
+                        assets.append(media)
+                else:
+                    continue
+            except KeyboardInterrupt:
+                break
         return assets
 
     def _download_one(self, asset_data, detect):
