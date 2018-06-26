@@ -86,6 +86,12 @@ class BaseMap(abc.ABC):
             self._records.append(record)
             self._keys.add(str(record.key))
 
+    def remove(self, record: MapRecord):
+        if self._lock:
+            raise IOError('Locked.')
+        self._records.remove(record)
+        self._sortedrecords = None
+
     def worker(self, i):
         return self.records[i - 1]
 
