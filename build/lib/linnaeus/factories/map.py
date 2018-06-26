@@ -6,6 +6,7 @@ from io import BytesIO
 import cv2
 import numpy as np
 import requests
+import math
 from PIL import Image
 
 from linnaeus.common import tryint
@@ -73,13 +74,13 @@ class ReferenceMapFactory:
         :param img: a PIL image object to build the map from
         :return: ReferenceMap
         """
-        max_side = max(img.size)
-        if max_side > constants.max_ref_side:
-            adjust = constants.max_ref_side / max_side
-            w, h = img.size
-            w = int(w * adjust)
-            h = int(h * adjust)
-            img = img.resize((w, h))
+        w, h = img.size
+        current_size = w * h
+        if current_size > constants.max_ref_size:
+            adjust = math.sqrt(constants.max_ref_size / current_size)
+            nw = int(w * adjust)
+            nh = int(h * adjust)
+            img = img.resize((nw, nh))
         pixels = np.array(img)
         r = 0
         with ReferenceMap() as new_map:
@@ -213,7 +214,7 @@ class ComponentMapFactory:
                 try:
                     r = requests.get(
                         asset.get('identifier').replace('preview', 'thumbnail'),
-                        timeout=2)
+                        timeout=10)
                     components.append(Component(Image.open(BytesIO(r.content)),
                                                 asset.get('identifier')))
                 except requests.ReadTimeout:

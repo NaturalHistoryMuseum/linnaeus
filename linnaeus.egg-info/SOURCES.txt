@@ -11,11 +11,14 @@ linnaeus.egg-info/requires.txt
 linnaeus.egg-info/top_level.txt
 linnaeus/factories/__init__.py
 linnaeus/factories/map.py
+linnaeus/maputils/__init__.py
+linnaeus/maputils/clean.py
 linnaeus/models/__init__.py
 linnaeus/models/component.py
 linnaeus/models/entries.py
 linnaeus/models/maps.py
 linnaeus/utils/__init__.py
 linnaeus/utils/download.py
+linnaeus/utils/draw.py
 linnaeus/utils/format.py
 linnaeus/utils/portal.py

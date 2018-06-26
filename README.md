@@ -58,7 +58,7 @@ The config file syntax looks like this:
 ```yaml
 pixel_width: 50
 pixel_height: 50
-max_ref_side: 100
+max_ref_size: 8000
 saturation_threshold: 50
 ```
 
