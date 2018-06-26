@@ -195,6 +195,18 @@ assets = downloader.search(query='red', collectionCode='min')
 downloader.download(assets, detect=False)
 ```
 
+### Cleaner
+
+This helps to purge errant components from your input map.
+
+```python
+from linnaeus.maputils.clean import clean_colour, clean_similar_to
+
+clean_colour('specimens.json', False, s=150, st=20, v=234, vt=5)
+
+clean_similar_to('solution_map.json', 'specimens.json', 40, 24, False)
+```
+
 ## Output
 
 Small confession: it does cheat a _little_ bit. The pixels are matched to the best possible component (without duplicates), but just to make it look a little nicer, the component's colour is tweaked before inserting it.
