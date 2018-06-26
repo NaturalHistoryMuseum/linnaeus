@@ -97,16 +97,17 @@ class Builder(object):
             logger.debug('building solution map')
             logger.debug(f'processing {solver.NumArcs()} arcs')
             with ProgressLogger(solver.NumArcs(), 20) as p, SolutionMap() as solution:
+                ref_map_len = len(ref_map)
                 for arc in range(solver.NumArcs()):
-                    if 0 < solver.Tail(arc) <= len(ref_map) and solver.Head(
-                            arc) != arc_count:
-                        if solver.Flow(arc) > 0:
-                            pixel = ref_map.worker(solver.Tail(arc))
-                            comp = comp_map.task(solver.Head(arc),
-                                                 len(ref_map))
-                            combined_value = CombinedEntry(path=comp.key,
-                                                           target=pixel.value)
-                            solution.add(pixel.key, combined_value)
+                    t = solver.Tail(arc)
+                    h = solver.Head(arc)
+                    f = solver.Flow(arc)
+                    if 0 < t <= ref_map_len and h != arc_count and f > 0:
+                        pixel = ref_map.worker(t)
+                        comp = comp_map.task(h, ref_map_len)
+                        combined_value = CombinedEntry(path=comp.key,
+                                                       target=pixel.value)
+                        solution.add(pixel.key, combined_value)
                     p.next()
                 logger.debug('finished solving')
                 return solution
