@@ -1,6 +1,6 @@
 import abc
-import numpy as np
 import json
+import numpy as np
 
 from .entries import BaseEntry, CombinedEntry, CoordinateEntry, HsvEntry, LocationEntry
 
@@ -31,6 +31,9 @@ class MapRecord(object):
         else:
             raise NotImplementedError
 
+    def __str__(self):
+        return f'{str(self.key)}: {str(self.value)}'
+
 
 class BaseMap(abc.ABC):
     key_type = BaseEntry
@@ -54,6 +57,36 @@ class BaseMap(abc.ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._cache = True
         self._lock = True
+
+    def __getitem__(self, item):
+        if not isinstance(item, self.key_type):
+            if isinstance(item, list):
+                try:
+                    k = self.key_type(*item)
+                except:
+                    raise KeyError(
+                        f'Incorrect arguments for the {self.key_type.__name__} entry '
+                        f'type.')
+            elif isinstance(item, dict):
+                try:
+                    k = self.key_type(**item)
+                except:
+                    raise KeyError(
+                        f'Incorrect arguments for the {self.key_type.__name__} entry '
+                        f'type.')
+            else:
+                try:
+                    k = self.key_type(item)
+                except:
+                    raise KeyError(
+                        f'Incorrect arguments for the {self.key_type.__name__} entry '
+                        f'type.')
+        else:
+            k = item
+        try:
+            return next(r for r in self.records if r.key == k)
+        except StopIteration:
+            raise KeyError(f'Key {str(k)} does not exist in this map.')
 
     @property
     def records(self):
@@ -139,7 +172,7 @@ class SolutionMap(ReferenceMap):
     combined_types = {
         'path': LocationEntry,
         'target': HsvEntry
-    }
+        }
 
     def validate(self, record):
         for k, e in record.value.entries.items():

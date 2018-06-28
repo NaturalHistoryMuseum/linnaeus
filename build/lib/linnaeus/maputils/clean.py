@@ -8,9 +8,9 @@ def clean_colour(path, commit=True, **kwargs):
     h = kwargs.get('h', None)
     s = kwargs.get('s', None)
     v = kwargs.get('v', None)
-    ht = kwargs.get('h_tolerance', 5)
-    st = kwargs.get('s_tolerance', 5)
-    vt = kwargs.get('v_tolerance', 5)
+    ht = kwargs.get('ht', 5)
+    st = kwargs.get('st', 5)
+    vt = kwargs.get('vt', 5)
     matches = []
     for r in m.records:
         h_pass = (h is not None and math.isclose(r.value.h, h,
@@ -37,9 +37,12 @@ def clean_colour(path, commit=True, **kwargs):
         if commit:
             print('deleting from map.')
             MapFactory.save_text(path + '.dirty', m.serialise())
+            c = 0
             with m:
                 for r in matches:
                     m.remove(r)
+                    print(f'{c}: {r}')
+                    c += 1
             MapFactory.save_text(path, m.serialise())
     else:
         print('no matches found.')

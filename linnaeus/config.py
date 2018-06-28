@@ -26,7 +26,7 @@ class Config(object):
 
 constants = Config()
 
-logger = logging.getLogger()
+logger = logging.getLogger('linnaeus')
 handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
