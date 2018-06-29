@@ -47,12 +47,12 @@ if os.path.exists(sol_map_save_path):
         MapFactory.load_text(sol_map_save_path))
 else:
     # make a new solution map
-    solution_map = Builder.solve(reference_map, component_map)
+    solution_map = Builder.solve(reference_map, component_map, use_mask=True,
+                                 mask_tolerance=-1)
     # save the solution
     MapFactory.save_text(sol_map_save_path, solution_map.serialise())
 
 # use the solution map to fill a canvas
-canvas = Builder.fill(solution_map)
+canvas = Builder.fill(solution_map, adjust=True)
 # save the canvas
 canvas.save(composite_save_path)
-

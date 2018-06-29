@@ -38,7 +38,7 @@ class Builder(object):
         logger.debug('calculating cost matrix')
         xy = pairwise_distances(ref_records, comp_records)
         logger.debug('calculated distances - now normalising')
-        cm = (xy - xy.min()).astype(int)
+        cm = (xy.T - xy.min(axis=1)).T.astype(int)
         r, c = cm.shape
         if use_mask:
             logger.debug('masking cost matrix')
@@ -49,8 +49,10 @@ class Builder(object):
             assert (cm_mask.sum(axis=1) > 0).all()
             cm_nonzero = cm_mask.nonzero()
             masked = cm[cm_nonzero]
-            cm = np.dstack((*cm_nonzero, masked))[0]
-            print(cm)
+            row, col = cm_nonzero
+            row = row + 1
+            col = col + r + 1
+            cm = np.dstack((row, col, masked))[0]
         else:
             cm = cm.reshape(-1, 1)
         logger.debug('finished calculating cost matrix')
@@ -105,7 +107,7 @@ class Builder(object):
                                                              c,
                                                              1,
                                                              cost)
-                    p.next()
+                        p.next()
         logger.debug(f'section 3: {cols} items')
         with ProgressLogger(cols, 5) as p:
             # section three
@@ -120,8 +122,8 @@ class Builder(object):
         for i in range(supplies.size):
             solver.SetNodeSupply(i, np.asscalar(supplies[i]))
         logger.debug('solving')
-        sol = solver.Solve()
-        if sol == solver.OPTIMAL:
+        status = solver.Solve()
+        if status == solver.OPTIMAL:
             logger.debug('building solution map')
             logger.debug(f'processing {solver.NumArcs()} arcs')
             with ProgressLogger(solver.NumArcs(), 20) as p, SolutionMap() as solution:
@@ -140,7 +142,7 @@ class Builder(object):
                 logger.debug('finished solving')
                 return solution
         else:
-            raise SolveError(sol, use_mask)
+            raise SolveError(status, use_mask)
 
     @classmethod
     def fill(cls, solution_map: SolutionMap, adjust=True):
