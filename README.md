@@ -53,13 +53,29 @@ Except cropped and resized to 50x50 squares (see the Formatter utility):
 
 The configuration file should be named `.config` and be inside your working directory. If you're fine with the defaults (shown below) then you don't have to have a config file.
 
-The config file syntax looks like this:
+The config file syntax looks like this (and these are the default values):
 
 ```yaml
+# the width of each component image
 pixel_width: 50
+
+# the height of each component image - non-square dimensions are untested
 pixel_height: 50
+
+# the maximum number of component images in the final output
 max_ref_size: 8000
+
+# used for the downloader but not a lot else
 saturation_threshold: 50
+
+# the maximum component pool size - e.g. if you have 200k component images the program will randomly choose 80k of them
+max_components: 80000
+
+# set to warn or lower(?) to turn off progress updates
+log_level: debug
+
+# method for determining the dominant colour in an image: either 'average' or 'round'
+dominant_colour_method: average
 ```
 
 So the example project structure looks like this at the start of the first build:

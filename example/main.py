@@ -1,6 +1,6 @@
 import os
 
-from linnaeus import Builder, MapFactory
+from linnaeus import Builder, MapFactory, SolveError
 
 # PATH DEFINITIONS
 # ----------------
@@ -27,7 +27,7 @@ else:
     reference_map = MapFactory.reference().from_image_local(ref_image_path)
     # and save it
     MapFactory.save_text(ref_map_save_path, reference_map.serialise())
-    
+
 if os.path.exists(comp_map_save_path):
     # load a component map
     component_map = MapFactory.component().deserialise(
@@ -47,8 +47,15 @@ if os.path.exists(sol_map_save_path):
         MapFactory.load_text(sol_map_save_path))
 else:
     # make a new solution map
-    solution_map = Builder.solve(reference_map, component_map, use_mask=True,
-                                 mask_tolerance=-1)
+    try:
+        # use masking to ignore components that are unlikely to match - this is much
+        # faster but more likely to fail
+        # (the lower the mask_tolerance, the more components will be ignored)
+        solution_map = Builder.solve(reference_map, component_map, use_mask=True,
+                                     mask_tolerance=-1)
+    except SolveError:
+        # try again without masking
+        solution_map = Builder.solve(reference_map, component_map, use_mask=False)
     # save the solution
     MapFactory.save_text(sol_map_save_path, solution_map.serialise())
 
