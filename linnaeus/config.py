@@ -34,16 +34,24 @@ logger.addHandler(handler)
 logger.setLevel(constants.log_level)
 
 
-class ProgressLogger(object):
+class TimeLogger(object):
+    def done(self):
+        logger.debug(f'time taken: {dt.now() - self.start}')
+
+    def __enter__(self):
+        self.start = dt.now()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.done()
+
+
+class ProgressLogger(TimeLogger):
     def __init__(self, total, n_reports, max_seconds=60):
         self.total = total
         self.current = 0
         self.interval = int(total / n_reports)
         self.max_seconds = max_seconds
-
-    def __enter__(self):
-        self.start = dt.now()
-        return self
 
     def next(self):
         self.current += 1
@@ -53,5 +61,5 @@ class ProgressLogger(object):
             etr = timedelta(seconds=avg * (self.total - self.current))
             logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def done(self):
         logger.debug(f'processed {self.current} items in {dt.now() - self.start}')

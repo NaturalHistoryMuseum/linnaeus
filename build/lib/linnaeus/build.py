@@ -5,7 +5,7 @@ from ortools.graph import pywrapgraph
 from scipy import sparse
 from sklearn.metrics.pairwise import pairwise_distances
 
-from .config import ProgressLogger, constants, logger
+from .config import ProgressLogger, TimeLogger, constants, logger
 from .models import CombinedEntry, Component, SolutionMap
 
 
@@ -37,21 +37,26 @@ class Builder(object):
         comp_records = sparse.csr_matrix([r.value.array for r in comp_map.records])
         logger.debug('calculating cost matrix')
         xy = pairwise_distances(ref_records, comp_records)
-        logger.debug('calculated distances - now normalising')
+        logger.debug('normalising cost matrix')
         cm = (xy.T - xy.min(axis=1)).T.astype(int)
         r, c = cm.shape
         if use_mask:
             logger.debug('masking cost matrix')
+            logger.info('calculating distance from mean')
             deviance = np.ma.array(cm).anom(axis=1)
-            cm_mask = np.ma.masked_less_equal(
-                (deviance.T - (deviance.std(axis=1) * mask_tolerance)).T,
-                0).mask
+            logger.info('adjusting distance matrix')
+            deviance = (deviance.T - (deviance.std(axis=1) * mask_tolerance)).T
+            logger.info('masking items')
+            cm_mask = np.ma.masked_less_equal(deviance, 0).mask
             assert (cm_mask.sum(axis=1) > 0).all()
             cm_nonzero = cm_mask.nonzero()
+            logger.info('applying mask to cost matrix')
             masked = cm[cm_nonzero]
             row, col = cm_nonzero
+            logger.info('adjusting row/col indices')
             row = row + 1
             col = col + r + 1
+            logger.info('grouping')
             cm = np.dstack((row, col, masked))[0]
         else:
             cm = cm.reshape(-1, 1)
@@ -73,7 +78,7 @@ class Builder(object):
         logger.debug(f'adding {arc_count} arcs to solver ')
         solver = pywrapgraph.SimpleMinCostFlow()
         logger.debug(f'section 1: {rows} items')
-        with ProgressLogger(rows, 5) as p:
+        with ProgressLogger(rows, 2) as p:
             last_node = rows + cols + 1
             # section one
             for i in range(1, rows + 1):
@@ -83,7 +88,7 @@ class Builder(object):
                                                      0)
                 p.next()
         logger.debug(f'section 2: {cost_arcs} items')
-        with ProgressLogger(cost_arcs, 10) as p:
+        with ProgressLogger(cost_arcs, 20) as p:
             # section two
             if use_mask:
                 for n in cost_matrix:
@@ -109,7 +114,7 @@ class Builder(object):
                                                              cost)
                         p.next()
         logger.debug(f'section 3: {cols} items')
-        with ProgressLogger(cols, 5) as p:
+        with ProgressLogger(cols, 3) as p:
             # section three
             for i in range(rows + 1, last_node):
                 solver.AddArcWithCapacityAndUnitCost(
@@ -122,7 +127,8 @@ class Builder(object):
         for i in range(supplies.size):
             solver.SetNodeSupply(i, np.asscalar(supplies[i]))
         logger.debug('solving')
-        status = solver.Solve()
+        with TimeLogger():
+            status = solver.Solve()
         if status == solver.OPTIMAL:
             logger.debug('building solution map')
             logger.debug(f'processing {solver.NumArcs()} arcs')
