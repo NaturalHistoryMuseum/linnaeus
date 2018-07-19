@@ -1,59 +1,43 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>linnaeus showcase</title>
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="stylesheet"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css"
-          integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="static/vendor/loupe.css">
-    <link href="static/main.css" rel="stylesheet" media="screen">
-
-</head>
-
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.12/css/all.css" integrity="sha384-G0fIWCsCzJIMAVNQPfjH08cyYaUtMwjJwqiRKxxE/rx96Uroj1BtIQ6MLJuheaO9" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display|Open+Sans" rel="stylesheet">
+<link rel="stylesheet" href="/js.1720f84d.css"></head>
 <body>
 
 <nav class="navbar fixed-top navbar-expand-sm navbar-dark bg-dark">
     <div class="container">
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-                aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#" data-target="static/images/linnaeus.jpg"><h2>Linnaeus</h2></a>
+                    <a class="nav-link active" href="#" data-target="linnaeus" id="linnaeus-link"><h2>Linnaeus</h2></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" data-target="static/images/comparison.jpg"><h2>Comparison</h2></a>
+                    <a class="nav-link" href="#" data-target="hintzehall"><h2>Hintze Hall</h2></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" data-target="static/images/specimens.jpg"><h2>15000 Specimens</h2></a>
+                    <a class="nav-link" href="#" data-target="richardowen"><h2>Richard Owen</h2></a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
+
 <div class="site-content">
-    <div class="container">
-        <div class="body-content">
-            <div>
-                <div class="container center-content">
-                    <img src="static/images/linnaeus.jpg" alt="An image recreated using images of specimens
-                                  from the Natural History Museum." id="thumb"
-                         class="img-fluid zoom-src" style="max-width: 500px;">
+    <div class="container body-content">
+                <div class="container center-content" id="displayBox">
+                    <div class="row">
+                        <div class="col" id="grid"></div>
+                    </div>
                 </div>
-                <p class="center-content"><small>Hover over the image and scroll in/out to zoom</small></p>
+                <p class="center-content"><small>Hover over each 'pixel' to see the full image and click to see related records on the Data Portal</small></p>
                 <br>
                 <h1>About</h1>
                 <hr>
@@ -63,20 +47,14 @@
                 <p>About <a href="http://www.nhm.ac.uk/our-science/collections.html">80
                     million</a> of them, in fact.</p>
                 <p>
-                    Over 4 million of those have already been <a
-                        href="http://www.nhm.ac.uk/digitalcollections">digitised</a> and
-                    are available to explore via the Museum's <a
-                        href="http://data.nhm.ac.uk">Data Portal</a>. To celebrate
+                    Over 4 million of those have already been <a href="http://www.nhm.ac.uk/digitalcollections">digitised</a> and
+                    are available to explore via the Museum's <a href="http://data.nhm.ac.uk">Data Portal</a>. To celebrate
                     reaching the 4 million specimens milestone, and to show the diversity
                     of even such a small portion of our collection, we recreated a
-                    painting of <a
-                        href="https://www.linnean.org/learning/who-was-linnaeus">Carl
+                    painting of <a href="https://www.linnean.org/learning/who-was-linnaeus">Carl
                     Linnaeus</a> using images from the Data Portal. </p>
-                <p>Have a look at our <a
-                        href="https://blog.nhm.ac.uk/2018/05/23/4-million-digital-specimens-and-counting-digital-collections-programme/">blog
+                <p>Have a look at our <a href="https://blog.nhm.ac.uk/2018/05/23/4-million-digital-specimens-and-counting-digital-collections-programme/">blog
                     post</a> about reaching the 4 million milestone!</p>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -86,24 +64,12 @@
     <nav class="navbar fixed-bottom navbar-dark bg-dark">
         <div class="container">
         <span style="text-align: center; width: 100%;">
-            <i class="fas fa-leaf" style="margin-right: 10px;"></i> made by the <a
-                href="http://data.nhm.ac.uk">NHM bioinformatics team</a>
+            <i class="fas fa-leaf" style="margin-right: 10px;"></i> made by the <a href="http://data.nhm.ac.uk">Natural History Museum's bioinformatics team</a>
         </span>
         </div>
     </nav>
 </footer>
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-        crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-        crossorigin="anonymous"></script>
-<script src="static/vendor/loupe.js"></script>
-<script src="static/main.js"></script>
 
-
+<script src="/js.1720f84d.js"></script>
 </body>
 </html>
