@@ -29,7 +29,8 @@ def thumbnails(records, fn=None, ncols=3, title=True, max_size=65536):
             record = records.pop(0)
             img = np.array(Image.open(record.key.entry))
             if title:
-                axes[r, c].set_title(i)
+                axes[r, c].set_title(i, {'fontsize': 20})
+            print(f'{i}: {record.key.entry}')
             axes[r, c].imshow(img)
 
     #fig.subplots_adjust(left=0.05, right=0.95, bottom=0.02, top=0.95)

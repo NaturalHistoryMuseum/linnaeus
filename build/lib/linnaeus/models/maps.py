@@ -147,8 +147,9 @@ class ReferenceMap(BaseMap):
 
     @property
     def bounds(self):
-        return [i + 1 for i in
-                max(self._records, key=lambda x: (x.key.x, x.key.y)).key.entry]
+        w = max(self._records, key=lambda x: x.key.x).key.x + 1
+        h = max(self._records, key=lambda x: x.key.y).key.y + 1
+        return [w, h]
 
 
 class ComponentMap(BaseMap):

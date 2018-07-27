@@ -1,13 +1,13 @@
-import imghdr
-import json
-import os
-from io import BytesIO
+import math
 
 import cv2
+import imghdr
+import json
 import numpy as np
+import os
 import requests
-import math
 from PIL import Image
+from io import BytesIO
 
 from linnaeus.common import tryint
 from linnaeus.config import constants
@@ -82,16 +82,21 @@ class ReferenceMapFactory:
             nh = int(h * adjust)
             img = img.resize((nw, nh))
         pixels = np.array(img)
-        r = 0
+        rn, cn, _ = pixels.shape
+        rows = np.repeat(np.arange(rn), cn).reshape(rn, cn, 1)
+        cols = np.tile(np.arange(cn), rn).reshape(rn, cn, 1)
+        hsv_pixels = cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL)
+        hsv_pixels = np.c_[rows, cols, hsv_pixels]
         with ReferenceMap() as new_map:
-            for row in cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL):
-                c = 0
-                for col in row:
-                    rk = CoordinateEntry(c, r)
-                    rv = HsvEntry(*[np.asscalar(i) for i in col])
-                    new_map.add(rk, rv)
-                    c += 1
-                r += 1
+            if img.mode == 'RGBA':
+                transparent_mask = pixels[..., 3] > 0
+                hsv_pixels = hsv_pixels[transparent_mask]
+            else:
+                np.concatenate(hsv_pixels)
+            for pixel in hsv_pixels:
+                rk = CoordinateEntry(np.asscalar(pixel[1]), np.asscalar(pixel[0]))
+                rv = HsvEntry(*[np.asscalar(i) for i in pixel[2:]])
+                new_map.add(rk, rv)
             return new_map
 
     @classmethod
