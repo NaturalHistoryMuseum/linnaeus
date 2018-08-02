@@ -146,6 +146,8 @@ class Builder(object):
                         solution.add(pixel.key, combined_value)
                     p.next()
                 logger.debug('finished solving')
+                logger.debug(f'assigned {len(solution)} pixels from a pool of '
+                             f'{constants.max_components} specimen images')
                 return solution
         else:
             raise SolveError(status, use_mask)

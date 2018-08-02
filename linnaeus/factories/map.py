@@ -82,7 +82,8 @@ class ReferenceMapFactory:
             nh = int(h * adjust)
             img = img.resize((nw, nh))
         pixels = np.array(img)
-        rn, cn, _ = pixels.shape
+        rn = pixels.shape[0]
+        cn = pixels.shape[1]
         rows = np.repeat(np.arange(rn), cn).reshape(rn, cn, 1)
         cols = np.tile(np.arange(cn), rn).reshape(rn, cn, 1)
         hsv_pixels = cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL)
