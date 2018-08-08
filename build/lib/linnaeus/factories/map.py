@@ -93,7 +93,7 @@ class ReferenceMapFactory:
                 transparent_mask = pixels[..., 3] > 0
                 hsv_pixels = hsv_pixels[transparent_mask]
             else:
-                np.concatenate(hsv_pixels)
+                hsv_pixels = np.concatenate(hsv_pixels)
             for pixel in hsv_pixels:
                 rk = CoordinateEntry(np.asscalar(pixel[1]), np.asscalar(pixel[0]))
                 rv = HsvEntry(*[np.asscalar(i) for i in pixel[2:]])
