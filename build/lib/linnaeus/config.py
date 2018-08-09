@@ -18,10 +18,23 @@ class Config(object):
         self.pixel_size = (self.pixel_width, self.pixel_height)
         self.max_ref_size = config_dict.get('max_ref_size', 8000)
         self.saturation_threshold = config_dict.get('saturation_threshold', 50)
-        self.log_level = logging.getLevelName(
-            config_dict.get('log_level', 'DEBUG').upper())
+        self._log_level = config_dict.get('log_level', 'DEBUG').upper()
+        self.log_level = logging.getLevelName(self._log_level)
         self.dominant_colour_method = config_dict.get('dominant_colour_method',
                                                       'average')
+
+    def dump(self, path):
+        config_dict = {
+            'max_components': self.max_components,
+            'pixel_width': self.pixel_width,
+            'pixel_height': self.pixel_height,
+            'max_ref_size': self.max_ref_size,
+            'saturation_threshold': self.saturation_threshold,
+            'log_level': self._log_level,
+            'dominant_colour_method': self.dominant_colour_method
+            }
+        with open(path, 'w') as f:
+            yaml.dump(config_dict, f, default_flow_style=False)
 
 
 constants = Config()

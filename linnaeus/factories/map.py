@@ -149,6 +149,16 @@ class ReferenceMapFactory:
                 new_map.add(rk, rv)
             return new_map
 
+    @classmethod
+    def defaultpath(cls, identifier):
+        """
+        Returns a path to save the map to.
+        :param identifier: a unique identifier for this reference, e.g. the image name
+        :return: str
+        """
+        return os.path.join('maps',
+                            f'{identifier}_ref_{constants.max_ref_size}.json')
+
 
 class ComponentMapFactory:
     @classmethod
@@ -242,6 +252,17 @@ class ComponentMapFactory:
                 new_map.add(rk, rv)
             return new_map
 
+    @classmethod
+    def defaultpath(cls, identifier):
+        """
+        Returns a path to save the map to.
+        :param identifier: a unique identifier/name for this set of components
+        :return: str
+        """
+        return os.path.join('maps',
+                            f'{identifier}_'
+                            f'{constants.dominant_colour_method}.json')
+
 
 class SolutionMapFactory:
     @classmethod
@@ -260,3 +281,14 @@ class SolutionMapFactory:
                     SolutionMap.combined_types[ek](ev) for ek, ev in v.items()})
                 new_map.add(rk, rv)
             return new_map
+
+    @classmethod
+    def defaultpath(cls, identifier):
+        """
+        Returns a path to save the map to.
+        :param identifier: a unique identifier for this solution, e.g. the image name
+        :return: str
+        """
+        return os.path.join('maps',
+                            f'{identifier}_solution_{constants.max_ref_size}_'
+                            f'{constants.max_components}.json')
