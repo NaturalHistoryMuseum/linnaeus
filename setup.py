@@ -14,7 +14,6 @@ VERSION = '1.5.2'
 with open('requirements.txt', 'r') as req_file:
     REQUIRED = [r.strip() for r in req_file.readlines()]
 
-# Where the magic happens:
 setup(
     name=NAME,
     version=VERSION,
@@ -27,6 +26,10 @@ setup(
     packages=find_packages(exclude=('tests',)),
     install_requires=REQUIRED,
     include_package_data=True,
+    entry_points='''
+        [console_scripts]
+        linnaeus=linnaeus.cli:cli
+    ''',
     license='MIT',
     classifiers=[
         'License :: OSI Approved :: MIT License',
