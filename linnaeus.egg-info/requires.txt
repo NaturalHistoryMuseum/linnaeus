@@ -12,3 +12,4 @@ numba
 scipy
 scikit-learn
 cached-property
+click

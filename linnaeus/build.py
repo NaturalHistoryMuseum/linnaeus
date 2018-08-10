@@ -48,7 +48,8 @@ class Builder(object):
             deviance = (deviance.T - (deviance.std(axis=1) * mask_tolerance)).T
             logger.info('masking items')
             cm_mask = np.ma.masked_less_equal(deviance, 0).mask
-            assert (cm_mask.sum(axis=1) > 0).all()
+            if not (cm_mask.sum(axis=1) > 0).all():
+                raise SolveError(None, masked=True, msg='Mask tolerance too low.')
             cm_nonzero = cm_mask.nonzero()
             logger.info('applying mask to cost matrix')
             masked = cm[cm_nonzero]
@@ -153,15 +154,17 @@ class Builder(object):
             raise SolveError(status, use_mask)
 
     @classmethod
-    def fill(cls, solution_map: SolutionMap, adjust=True):
+    def fill(cls, solution_map: SolutionMap, adjust=True, prefix=None):
         logger.debug('building image')
         canvas = Canvas(solution_map.bounds)
-        for record in solution_map.records:
-            component = Component(record.value.entries['path'].get())
-            target = record.value.entries.get('target', None)
-            img = component.adjust(
-                *target.entry) if adjust and target is not None else component.img
-            canvas.paste(record.key.x, record.key.y, img, record.value.entries['path'])
+        with ProgressLogger(len(solution_map), 10) as p:
+            for record in solution_map.records:
+                component = Component(record.value.entries['path'].get(prefix))
+                target = record.value.entries.get('target', None)
+                img = component.adjust(
+                    *target.entry) if adjust and target is not None else component.img
+                canvas.paste(record.key.x, record.key.y, img, record.value.entries['path'])
+                p.next()
         logger.debug('image finished')
         return canvas
 

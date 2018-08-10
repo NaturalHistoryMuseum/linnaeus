@@ -71,7 +71,7 @@ class LocationEntry(BaseEntry):
             else:
                 self._type = 'local'
 
-    def get(self):
+    def get(self, prefix=None):
         if self._type == 'url':
             try:
                 r = requests.get(self.path, timeout=10)
@@ -79,6 +79,8 @@ class LocationEntry(BaseEntry):
             except requests.ReadTimeout:
                 raise AttributeError(f'Unable to retrieve content: {self.path}')
         elif self._type == 'local':
+            if prefix is not None:
+                self.path = os.path.join(prefix, self.path)
             if os.path.exists(self.path):
                 return Image.open(self.path)
             else:
