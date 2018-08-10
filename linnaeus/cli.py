@@ -137,7 +137,10 @@ def readmap(path):
               help='Use masking to ignore components that are unlikely to match - this '
                    'is much faster but more likely to fail. Lower tolerance = more '
                    'components removed.')
-def solve(ref, comps, output, tolerance):
+@click.option('--silhouette', is_flag=True, help='Create a silhouette image, i.e. not '
+                                                 'matched on colour. Only really works '
+                                                 'with references with transparency.')
+def solve(ref, comps, output, tolerance, silhouette):
     """
     Attempts to create a solution map for the given reference and component set.
 
@@ -152,7 +155,8 @@ def solve(ref, comps, output, tolerance):
 
     # load and/or make maps
     ref_map = deserialise(ref, MapFactory.reference(),
-                          MapFactory.reference().from_image_local, saveas=MapFactory.reference().defaultpath(iden))
+                          MapFactory.reference().from_image_local,
+                          saveas=MapFactory.reference().defaultpath(iden))
 
     kwargs = {
         'folders': [],
@@ -175,28 +179,38 @@ def solve(ref, comps, output, tolerance):
                                lambda x: MapFactory.component().from_local(**kwargs),
                                saveas=saveas)
 
-    solved = False
-    tol = float(tolerance)
-    use_mask = True
-    attempts = 0
-    while not solved and attempts < 5:
-        attempts += 1
+    solution_map = None
+    if silhouette:
         try:
-            solution_map = Builder.solve(ref_map, comp_map,
-                                         mask_tolerance=tol, use_mask=use_mask)
-            MapFactory.save_text(output, solution_map.serialise())
-            solved = True
+            solution_map = Builder.silhouette(ref_map, comp_map)
         except SolveError as e:
-            click.echo(e, err=True)
-            if not use_mask or attempts >= 5:
-                click.echo('Nothing more to be done. Aborting.')
-                raise click.Abort
-            elif use_mask and tol < -0.5 and click.confirm(
-                    f'Increase tolerance to {tol/2}?', default=True):
-                tol /= 2
-            else:
-                click.confirm('Disable mask?', abort=True, default=True)
-                use_mask = False
+            click.echo(f'Something went wrong: {e}', err=True)
+            raise click.Abort
+    else:
+        tol = float(tolerance)
+        use_mask = True
+        attempts = 0
+        while solution_map is None and attempts < 5:
+            attempts += 1
+            try:
+                solution_map = Builder.solve(ref_map, comp_map,
+                                             mask_tolerance=tol, use_mask=use_mask)
+                break
+            except SolveError as e:
+                click.echo(e, err=True)
+                if not use_mask or attempts >= 5:
+                    click.echo('Nothing more to be done. Aborting.', err=True)
+                    raise click.Abort
+                elif use_mask and tol < -0.5 and click.confirm(
+                        f'Increase tolerance to {tol/2}?', default=True):
+                    tol /= 2
+                else:
+                    click.confirm('Disable mask?', abort=True, default=True)
+                    use_mask = False
+
+    if solution_map is not None:
+        MapFactory.save_text(output, solution_map.serialise())
+        click.echo(f'Saved to {output}')
 
 
 @cli.command(short_help='Generate an image from a solution map.')
@@ -221,6 +235,7 @@ def render(solution, output, adjust, prefix):
     solution_map = deserialise(solution, MapFactory.solution())
     canvas = Builder.fill(solution_map, adjust=adjust, prefix=prefix)
     canvas.save(output)
+    click.echo(f'Saved to {output}')
 
 
 @cli.command(short_help='Generate a .config file.')
