@@ -96,3 +96,7 @@ python your_script.py
 ```
 
 On first running, it may take a while - this example took around half an hour. The example folder in this repo includes all the maps for `linnaeus.jpg`, so if you just want to run the example it should only take about 30 seconds.
+
+## Using the CLI
+
+![CLI usage](demo.svg)

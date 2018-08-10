@@ -13,7 +13,7 @@ composite_save_path = os.path.join(root, 'outputs/new_composite.jpg')
 # where to save the maps
 map_save_dir = os.path.join(root, 'maps')
 ref_map_save_path = os.path.join(map_save_dir, 'ref.json')
-comp_map_save_path = os.path.join(map_save_dir, 'comp.json')
+comp_map_save_path = os.path.join(map_save_dir, 'specimens.json')
 sol_map_save_path = os.path.join(map_save_dir, 'solution.json')
 
 # MAPS

@@ -40,10 +40,9 @@ You can then either write a script to run it (see the example), or use the comma
 
 The CLI is fully documented (try `linnaeus -h`), so here's a minimal example that doesn't cover all commands but will produce a composite:
 
-```shell
-linnaeus solve /path/to/reference.jpg /path/to/components /additional/component.jpg /as/many/components/as/you/want
-linnaeus render /path/to/solution.json
-```
+![CLI usage](cli.png)
+
+An animated example of using the CLI and the expected output can be found the example README.
 
 ## Utilities
 
