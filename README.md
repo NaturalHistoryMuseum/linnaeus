@@ -27,14 +27,14 @@ pip install git+git://github.com/NaturalHistoryMuseum/linnaeus.git#egg=linnaeus
 
 # Usage
 
-A more detailed example, along with all the files needed to run it, can be found in the `example` folder of this repo.
+A more detailed example, along with all the files needed to run it, can be found in the [example](example) folder of this repo.
 
 To run the builder, you will need:
 - A reference image;
 - A folder full of component images;
 - Optionally, a configuration file to override the default settings.
 
-You can then either write a script to run it (see the example), or use the command line interface.
+You can then either write a script to run it (see [the example](example/README.md)), or use the command line interface.
 
 ## CLI
 
@@ -42,7 +42,7 @@ The CLI is fully documented (try `linnaeus -h`), so here's a minimal example tha
 
 ![CLI usage](cli.png)
 
-An animated example of using the CLI and the expected output can be found the example README.
+An animated example of using the CLI and the expected output can be found [here](example/demo.svg).
 
 ## Utilities
 
