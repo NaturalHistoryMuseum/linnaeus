@@ -99,4 +99,6 @@ On first running, it may take a while - this example took around half an hour. T
 
 ## Using the CLI
 
-![CLI usage](demo.svg)
+<p align="center">
+    <img src="demo.svg">
+</p>
