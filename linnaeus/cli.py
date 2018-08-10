@@ -146,7 +146,7 @@ def solve(ref, comps, output, tolerance):
     an image file (for the reference) and one or more paths to image files and/or
     directories (for the component map), similar to the makemap command.
     """
-    iden = os.path.splitext(ref.split(os.path.sep)[-1])[0]
+    iden = os.path.splitext(ref.split(os.path.sep)[-1])[0].split('_')[0]
     output = output or MapFactory.solution().defaultpath(iden)
     setup_path(output)
 
