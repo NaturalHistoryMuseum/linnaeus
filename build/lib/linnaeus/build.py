@@ -6,7 +6,7 @@ from scipy import sparse
 from sklearn.metrics.pairwise import pairwise_distances
 
 from .config import ProgressLogger, TimeLogger, constants, logger
-from .models import CombinedEntry, Component, SolutionMap
+from .models import CombinedEntry, Component, SolutionMap, HsvEntry
 
 
 @njit
@@ -154,6 +154,30 @@ class Builder(object):
             raise SolveError(status, use_mask)
 
     @classmethod
+    def silhouette(cls, ref_map, comp_map):
+        logger.debug('building arrays')
+        comp_records = np.c_[np.arange(len(comp_map)), [r.value.array for r in comp_map.records]]
+        logger.debug('removing unnecessary records')
+        parsort = np.argpartition(comp_records[:, 3], len(ref_map))
+        comp_records = comp_records[parsort][:len(ref_map)]
+        if len(comp_records) < len(ref_map):
+            raise SolveError
+        np.random.shuffle(comp_records)
+        logger.debug('building solution map')
+        logger.debug(f'assigning {len(ref_map)} pixels')
+        with ProgressLogger(len(ref_map), 20) as p, SolutionMap() as solution:
+            for i, pixel in enumerate(ref_map.records):
+                comp = comp_map.records[comp_records[i, 0]]
+                combined_value = CombinedEntry(path=comp.key,
+                                               target=HsvEntry(0, 0, 0))
+                solution.add(pixel.key, combined_value)
+                p.next()
+        logger.debug('finished solving')
+        logger.debug(f'assigned {len(solution)} pixels from a pool of '
+                     f'{len(comp_map)} specimen images')
+        return solution
+
+    @classmethod
     def fill(cls, solution_map: SolutionMap, adjust=True, prefix=None):
         logger.debug('building image')
         canvas = Canvas(solution_map.bounds)
@@ -163,7 +187,8 @@ class Builder(object):
                 target = record.value.entries.get('target', None)
                 img = component.adjust(
                     *target.entry) if adjust and target is not None else component.img
-                canvas.paste(record.key.x, record.key.y, img, record.value.entries['path'])
+                canvas.paste(record.key.x, record.key.y, img,
+                             record.value.entries['path'])
                 p.next()
         logger.debug('image finished')
         return canvas
@@ -175,7 +200,7 @@ class Canvas(object):
         self.w, self.h = size
         self.w *= constants.pixel_width
         self.h *= constants.pixel_height
-        self.composite, self.component_id_array = Image.new('RGB', (self.w, self.h),
+        self.composite, self.component_id_array = Image.new('RGBA', (self.w, self.h),
                                                             0), np.chararray(size)
 
     def paste(self, col, row, image, component_id):
