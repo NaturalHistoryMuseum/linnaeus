@@ -100,5 +100,5 @@ On first running, it may take a while - this example took around half an hour. T
 ## Using the CLI
 
 <p align="center">
-    <img src="demo.svg">
+    <img src="https://cdn.rawgit.com/NaturalHistoryMuseum/linnaeus/master/example/demo.svg">
 </p>
