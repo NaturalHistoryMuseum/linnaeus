@@ -19,6 +19,8 @@ linnaeus/models/__init__.py
 linnaeus/models/component.py
 linnaeus/models/entries.py
 linnaeus/models/maps.py
+linnaeus/preprocessing/__init__.py
+linnaeus/preprocessing/bg.py
 linnaeus/utils/__init__.py
 linnaeus/utils/download.py
 linnaeus/utils/draw.py

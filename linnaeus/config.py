@@ -19,9 +19,16 @@ class Config(object):
         self.max_ref_size = config_dict.get('max_ref_size', 8000)
         self.saturation_threshold = config_dict.get('saturation_threshold', 50)
         self._log_level = config_dict.get('log_level', 'DEBUG').upper()
-        self.log_level = logging.getLevelName(self._log_level)
         self.dominant_colour_method = config_dict.get('dominant_colour_method',
                                                       'average')
+
+    @property
+    def log_level(self):
+        return logging.getLevelName(self._log_level)
+
+    @log_level.setter
+    def log_level(self, level: str):
+        self._log_level = level.upper()
 
     def dump(self, path):
         config_dict = {
@@ -45,6 +52,10 @@ formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(constants.log_level)
+
+
+def silence():
+    logger.setLevel(logging.getLevelName('FATAL'))
 
 
 class TimeLogger(object):

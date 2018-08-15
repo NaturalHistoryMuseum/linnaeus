@@ -22,10 +22,10 @@ class Component(object):
         if len(data) == 0:
             return None, None, None
         if constants.dominant_colour_method == 'round':
-            rounded = (data / 10).round(0) * 10
+            rounded = (data / 20).round(0) * 20
             freq = np.unique(rounded, axis=0, return_counts=True)
-            most_freq = freq[0][np.where(freq[1] == freq[1].max())]
-            mask = np.apply_along_axis(lambda x: x.tolist() in most_freq.tolist(), 1,
+            most_freq = freq[0][np.where(freq[1] == freq[1].max())].tolist()
+            mask = np.apply_along_axis(lambda x: x.tolist() in most_freq, 1,
                                        rounded)
             dom = data[mask].mean(axis=0).astype(int).tolist()
         else:

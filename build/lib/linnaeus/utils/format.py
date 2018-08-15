@@ -34,6 +34,8 @@ class Formatter(object):
     @classmethod
     def resize(cls, img):
         w, h = img.size
+        if w == constants.pixel_width and h == constants.pixel_height:
+            return img
         adj = max(constants.pixel_width / w, constants.pixel_height / h)
         w = int(w * adj)
         h = int(h * adj)
