@@ -1,11 +1,14 @@
 import click
+import cv2
 import json
+import numpy as np
 import os
 from PIL import Image
 
 from linnaeus import Builder, MapFactory, SolveError
 from linnaeus.config import constants
 from linnaeus.models import ReferenceMap
+from linnaeus.preprocessing import BackgroundRemover, colourspace
 
 click_context = {
     'help_option_names': ['-h', '--help']
@@ -241,3 +244,55 @@ def render(solution, output, adjust, prefix):
 @cli.command(short_help='Generate a .config file.')
 def makeconfig():
     constants.dump('.config')
+
+
+@cli.group()
+def prepro():
+    pass
+
+
+@prepro.command(short_help='Remove the background from a reference image.')
+@click.argument('image', type=click.Path(exists=True))
+@click.option('-c', '--colour', nargs=3, type=click.INT,
+              help='Use this colour (RGB) as the background to remove. Auto-calculated '
+                   'from the image edges (or corners using the --corners flag) if not '
+                   'given.')
+@click.option('-b', '--background', type=click.Path(exists=True),
+              help='Use this image as the background to remove. Takes priority over '
+                   '--colour. If neither is given the colour is auto-calculated.')
+@click.option('-o', '--output', type=click.Path(),
+              help='Processed image output path. Auto-generated if not given.')
+@click.option('--corners', is_flag=True, default=False,
+              help='Use corner pixels instead of edges to determine the dominant '
+                   'colour.')
+@click.option('--fill-edges/--no-fill-edges', default=True,
+              help='Try to fix/smooth edges of the subject that are in contact with '
+                   'the edges of the image.')
+@click.option('--holes/--no-holes', default=True,
+              help='Remove areas matching the background colour from within the main '
+                   'subject shape.')
+@click.option('-e', '--erode', type=click.INT, default=2,
+              help='Erodes the mask before applying to remove colour edges and other '
+                   'artefacts.')
+def removebg(image, colour, background, output, corners, fill_edges, holes, erode):
+    """
+    Remove the background from an image (i.e. an image to be used as a reference) and
+    save it. Intended for use on images with a clearly defined subject against a plain
+    background.
+    """
+    img = np.array(Image.open(image))
+    if background is not None:
+        bg = BackgroundRemover(img, bg_image=np.array(Image.open(background)))
+    elif len(colour) == 3:
+        hsv_colour = colourspace(colour, cv2.COLOR_RGB2HSV_FULL)[0, 0]
+        bg = BackgroundRemover(img,
+                               colour=hsv_colour)
+    elif corners:
+        bg = BackgroundRemover.from_corners(img)
+    else:
+        bg = BackgroundRemover.from_edges(img)
+    masked_img = Image.fromarray(
+        bg.apply(bg.create_mask(fill_edges, holes, erosion=erode)))
+    output = output or os.path.splitext(image)[0] + '_bg.png'
+    masked_img.save(output)
+    click.echo(f'Saved to {output}')

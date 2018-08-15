@@ -135,6 +135,15 @@ class ReferenceMapFactory:
         return cls._build(img)
 
     @classmethod
+    def from_image_pil(cls, img):
+        """
+        Creates a ReferenceMap from a PIL Image object.
+        :param img: the image in PIL object form
+        :return: ReferenceMap
+        """
+        return cls._build(img)
+
+    @classmethod
     def deserialise(cls, txt):
         """
         Deserialise a JSON string to create a ReferenceMap.
