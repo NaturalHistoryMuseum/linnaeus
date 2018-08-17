@@ -156,8 +156,7 @@ def makemap(ctx, inputs, output):
 
 
 @cli.command(short_help='Displays some details about a serialised map file.')
-@click.option('-p', '--path', type=click.Path(exists=True), prompt=True,
-              help='The path to the serialised map file.')
+@click.argument('path', type=click.Path(exists=True))
 @click.pass_context
 def readmap(ctx, path):
     """
@@ -284,7 +283,7 @@ def render(ctx, solution, output, adjust, prefix):
     this is the case, use the '--prefix' flag to specify the location of the components.
     """
     from linnaeus import Builder, MapFactory
-    output = output or os.path.splitext(solution)[0] + '.jpg'
+    output = output or os.path.splitext(solution)[0] + '.png'
     setup_path(ctx, output)
     solution_map = deserialise(ctx, solution, MapFactory.solution())
     canvas = Builder.fill(solution_map, adjust=adjust, prefix=prefix)
