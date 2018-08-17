@@ -13,14 +13,27 @@ click_context = {
 
 
 def echo(ctx, msg, **kwargs):
-    pipe = ctx.obj['pipe']
+    """
+    Suppresses output if quiet option enabled.
+    :param ctx: context
+    :param msg: the message to display if quiet is not enabled
+    :param kwargs: keyword args passed to click.echo()
+    """
+    quiet = ctx.obj.get('quiet', False)
     is_err = kwargs.get('err', False)
-    if (not pipe) or is_err:
+    if (not quiet) or is_err:
         click.echo(msg, **kwargs)
 
 
 def confirm(ctx, msg, **kwargs):
-    if not ctx.obj['pipe']:
+    """
+    Requests confirmation if quiet option is not enabled, otherwise auto-accepts and
+    suppresses prompt.
+    :param ctx: context
+    :param msg: the message to display if quiet is not enabled
+    :param kwargs: keyword args passed to click.echo()
+    """
+    if not ctx.obj.get('quiet', False):
         return click.confirm(msg, **kwargs)
     else:
         return True
@@ -72,28 +85,31 @@ def deserialise(ctx, path, factory, callback=None, saveas=None):
 
 
 @click.group(invoke_without_command=False, context_settings=click_context)
-@click.pass_context
-@click.option('--pipe', is_flag=True, default=False,
+@click.option('--quiet', is_flag=True, default=False,
               help='Just output filenames - useful for scripting. WARNING: this will '
                    'auto-accept everything and set the log level to FATAL.')
-def cli(ctx, pipe):
+@click.option('-d', '--delimiter', default='\n',
+              help='Delimiter for piped input (defaults to newline).')
+@click.pass_context
+def cli(ctx, quiet, delimiter):
     """
     A command line interface for working with the linnaeus program.
 
     Run 'linnaeus <cmd> -h' for help with each subcommand.
     """
     ctx.obj = {
-        'pipe': pipe
+        'quiet': quiet
         }
-    if pipe:
+
+    if quiet:
         silence()
 
 
 @cli.command(short_help='Creates a reference map or component map.')
-@click.pass_context
 @click.argument('inputs', type=click.Path(exists=True), nargs=-1)
 @click.option('-o', '--output', type=click.Path(),
               help='Map save path. Auto-generated if not supplied.')
+@click.pass_context
 def makemap(ctx, inputs, output):
     """
     Creates a reference map or component map.
@@ -102,6 +118,7 @@ def makemap(ctx, inputs, output):
     path and/or multiple file paths are given, a component map will be made.
     """
     from linnaeus import MapFactory
+
     iden = os.path.splitext(inputs[0].split(os.path.sep)[-1])[0]
 
     if len(inputs) > 1 or os.path.isdir(inputs[0]):
@@ -139,8 +156,9 @@ def makemap(ctx, inputs, output):
 
 
 @cli.command(short_help='Displays some details about a serialised map file.')
+@click.option('-p', '--path', type=click.Path(exists=True), prompt=True,
+              help='The path to the serialised map file.')
 @click.pass_context
-@click.argument('path', type=click.Path(exists=True))
 def readmap(ctx, path):
     """
     Displays some details about the given serialised map file. Can also act as a sort
@@ -159,7 +177,6 @@ def readmap(ctx, path):
 
 
 @cli.command(short_help='Attempts to solve the given reference and component set.')
-@click.pass_context
 @click.argument('ref', type=click.Path(exists=True))
 @click.argument('comps', type=click.Path(exists=True), nargs=-1)
 @click.option('-o', '--output', type=click.Path(),
@@ -171,6 +188,7 @@ def readmap(ctx, path):
 @click.option('--silhouette', is_flag=True, help='Create a silhouette image, i.e. not '
                                                  'matched on colour. Only really works '
                                                  'with references with transparency.')
+@click.pass_context
 def solve(ctx, ref, comps, output, tolerance, silhouette):
     """
     Attempts to create a solution map for the given reference and component set.
@@ -248,7 +266,6 @@ def solve(ctx, ref, comps, output, tolerance, silhouette):
 
 
 @cli.command(short_help='Generate an image from a solution map.')
-@click.pass_context
 @click.argument('solution', type=click.Path(exists=True))
 @click.option('-o', '--output', type=click.Path(),
               help='Built image output path. Auto-generated if not given.')
@@ -257,6 +274,7 @@ def solve(ctx, ref, comps, output, tolerance, silhouette):
                    'match the reference.')
 @click.option('--prefix', type=click.Path(exists=True),
               help='The root directory of the components, either relative or absolute.')
+@click.pass_context
 def render(ctx, solution, output, adjust, prefix):
     """
     Generates a jpg image from the given solution map.
@@ -287,7 +305,6 @@ def prepro(ctx):
 
 
 @prepro.command(short_help='Remove the background from a reference image.')
-@click.pass_context
 @click.argument('image', type=click.Path(exists=True))
 @click.option('-c', '--colour', nargs=3, type=click.INT,
               help='Use this colour (RGB) as the background to remove. Auto-calculated '
@@ -310,6 +327,7 @@ def prepro(ctx):
 @click.option('-e', '--erode', type=click.INT, default=2,
               help='Erodes the mask before applying to remove colour edges and other '
                    'artefacts.')
+@click.pass_context
 def removebg(ctx, image, colour, background, output, corners, fill_edges, holes, erode):
     """
     Remove the background from an image (i.e. an image to be used as a reference) and
@@ -333,3 +351,8 @@ def removebg(ctx, image, colour, background, output, corners, fill_edges, holes,
     output = output or os.path.splitext(image)[0] + '_bg.png'
     masked_img.save(output)
     click.echo(output)
+
+
+if __name__ == '__main__':
+    import sys
+    cli(sys.argv[1:])
