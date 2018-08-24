@@ -12,6 +12,7 @@ linnaeus.egg-info/entry_points.txt
 linnaeus.egg-info/requires.txt
 linnaeus.egg-info/top_level.txt
 linnaeus/factories/__init__.py
+linnaeus/factories/_base.py
 linnaeus/factories/map.py
 linnaeus/maputils/__init__.py
 linnaeus/maputils/clean.py

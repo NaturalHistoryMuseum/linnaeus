@@ -74,7 +74,7 @@ class ProgressLogger(TimeLogger):
     def __init__(self, total, n_reports, max_seconds=60):
         self.total = total
         self.current = 0
-        self.interval = int(total / n_reports)
+        self.interval = int(total / n_reports) if total > n_reports else 1
         self.max_seconds = max_seconds
 
     def next(self):

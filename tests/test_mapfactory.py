@@ -5,7 +5,7 @@ from unittest.mock import patch
 import re
 
 from linnaeus.factories import MapFactory
-from linnaeus.models import ComponentMap, ReferenceMap
+from linnaeus.models import ComponentMap, ReferenceMap, SolutionMap
 from . import helpers
 
 
@@ -19,6 +19,8 @@ class TestMapFactory:
                                      ReferenceMap)
         nosetools.assert_is_instance(MapFactory.deserialise(helpers.serialised.comp),
                                      ComponentMap)
+        nosetools.assert_is_instance(MapFactory.deserialise(helpers.serialised.sol),
+                                     SolutionMap)
         with nosetools.assert_raises(ValueError):
             MapFactory.deserialise(helpers.serialised.invalid)
 

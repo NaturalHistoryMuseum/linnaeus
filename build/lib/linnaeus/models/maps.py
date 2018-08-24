@@ -84,9 +84,19 @@ class BaseMap(abc.ABC):
         else:
             k = item
         try:
-            return next(r for r in self.records if r.key == k)
+            return next(r for r in self._records if r.key == k)
         except StopIteration:
             raise KeyError(f'Key {str(k)} does not exist in this map.')
+
+    def __setitem__(self, key, value):
+        if self._lock:
+            raise IOError('Locked.')
+        try:
+            self.add(key, value)
+        except KeyError:
+            # for some reason self._records.index does not work, so this is a workaround
+            ix = next(i for i, r in enumerate(self._records) if r.key == key)
+            self._records[ix] = MapRecord(key, value)
 
     @property
     def records(self):
@@ -122,7 +132,8 @@ class BaseMap(abc.ABC):
     def remove(self, record: MapRecord):
         if self._lock:
             raise IOError('Locked.')
-        self._records.remove(record)
+        self._records = [r for r in self._records if r != record]
+        self._keys.remove(str(record.key))
         self._sortedrecords = None
 
     def worker(self, i):
@@ -134,6 +145,14 @@ class BaseMap(abc.ABC):
         except IndexError:
             print(i, workers, len(self.records))
             raise IndexError
+
+    def check(self):
+        recordkeys = sorted([str(r.key) for r in self._records])
+        keys = sorted(list(self._keys))
+        if not recordkeys == keys:
+            print(list(set(recordkeys) - set(keys)))
+            print(list(set(keys) - set(recordkeys)))
+        return recordkeys == keys
 
 
 class ReferenceMap(BaseMap):
