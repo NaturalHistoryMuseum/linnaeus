@@ -354,7 +354,7 @@ class MapFactory(BaseMapFactory):
         """
         content = json.loads(txt)
         first_key = list(content.items())[0]
-        if '|' in first_key[0]:
+        if '|' in first_key[0] and len(first_key[0].split('|')) == 2:
             # either ref or solution
             if isinstance(first_key[1], dict):
                 return cls.solution()

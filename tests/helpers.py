@@ -12,7 +12,8 @@ urls = SimpleNamespace(portal_image='http://www.nhm.ac.uk/services/media-store/a
                        random_image='http://placekitten.com/g/200/300')
 
 serialised = SimpleNamespace(ref='{"1|1":[255,255,255]}',
-                             comp='{"assetid":[255,255,255]}',
+                             comp='{"specimens/assetid.jpg":[255,255,255]}',
+                             sol='{"1|1":{"path":"specimens/assetid.jpg","target":[0, 0, 0]}}',
                              invalid='{"0|0|0":[300,300,300]}')
 
 with open(_local_root + 'portal-response.json', 'r') as f:
