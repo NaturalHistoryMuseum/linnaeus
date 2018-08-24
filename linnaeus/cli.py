@@ -297,6 +297,49 @@ def makeconfig(ctx):
     constants.dump('.config')
 
 
+@cli.command(short_help='Combine maps.')
+@click.argument('inputs', type=click.Path(exists=True), nargs=2)
+@click.option('-o', '--output', type=click.Path(),
+              help='Built image output path. Auto-generated if not given.')
+@click.option('--gravity', default='C',
+              help='(Solution/Reference maps only): C(enter), N(orth), S(outh), '
+                   'E(ast), or W(est). Can also combine NSEW (e.g. NE for top right '
+                   'corner).')
+@click.option('--offset', nargs=2,
+              help='(Solution/Reference maps only): Manually define x, y offset for '
+                   'new map. Overrides --gravity.')
+@click.option('--overlay/--no-overlay', default=True,
+              help='(Solution/Reference maps only): if True, the new map is added on '
+                   'top of the base map. If False, it is added next to the base map.')
+@click.option('--prefix', default='.',
+              help='(Component maps only): the root path for images in the base map. '
+                   'The images in the new map should be reachable from the same root '
+                   'path OR should be in a subdirectory of this path.')
+@click.pass_context
+def combine(ctx, inputs, output, **kwargs):
+    from linnaeus import MapFactory
+
+    basemap = deserialise(ctx, inputs[0], MapFactory)
+    newmap = deserialise(ctx, inputs[1], MapFactory)
+
+    if isinstance(basemap, MapFactory.component().product_class):
+        kwargs = {'prefix': kwargs.get('prefix', '.')}
+    else:
+        if 'offset' in kwargs and len(kwargs['offset']) == 2:
+            kwargs['gravity'] = kwargs['offset']
+        del kwargs['offset']
+        del kwargs['prefix']
+
+    combined_map = MapFactory.combine(basemap, newmap, **kwargs)
+    if output is None:
+        filename = inputs[0].split(os.path.sep)[-1]
+        filename = 'combined_' + filename
+        output = os.path.join('maps', filename)
+    setup_path(ctx, output)
+    MapFactory.save_text(output, combined_map.serialise())
+    click.echo(output)
+
+
 @cli.group()
 @click.pass_context
 def prepro(ctx):
