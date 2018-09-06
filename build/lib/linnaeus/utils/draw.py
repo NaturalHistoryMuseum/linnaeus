@@ -8,8 +8,8 @@ from linnaeus.config import constants
 
 def thumbnails(records, fn=None, ncols=3, title=True, max_size=65536):
     nrows = int(math.ceil(len(records) / ncols))
-    h = constants.pixel_height * nrows
-    w = constants.pixel_width * ncols
+    h = constants.pixel_size * nrows
+    w = constants.pixel_size * ncols
     if max_size > 65536:
         max_size = 65536
     if h > (max_size / 100) or w > (max_size / 100):

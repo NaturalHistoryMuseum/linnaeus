@@ -34,18 +34,18 @@ class Formatter(object):
     @classmethod
     def resize(cls, img):
         w, h = img.size
-        if w == constants.pixel_width and h == constants.pixel_height:
+        if w == constants.pixel_size and h == constants.pixel_size:
             return img
-        adj = max(constants.pixel_width / w, constants.pixel_height / h)
+        adj = max(constants.pixel_size / w, constants.pixel_size / h)
         w = int(w * adj)
         h = int(h * adj)
         img = img.resize((w, h))
-        x_pad = (w - constants.pixel_width) // 2
-        y_pad = (h - constants.pixel_height) // 2
+        x_pad = (w - constants.pixel_size) // 2
+        y_pad = (h - constants.pixel_size) // 2
         img = img.crop((
             x_pad,
             y_pad,
-            x_pad + constants.pixel_width,
-            y_pad + constants.pixel_height
+            x_pad + constants.pixel_size,
+            y_pad + constants.pixel_size
             ))
         return img

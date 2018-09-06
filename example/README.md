@@ -16,11 +16,8 @@ The configuration file should be named `.config` and be inside your working dire
 The config file syntax looks like this (and these are the default values):
 
 ```yaml
-# the width of each component image
-pixel_width: 50
-
-# the height of each component image - non-square dimensions are untested
-pixel_height: 50
+# the width and height of each component image (they must be square)
+pixel_size: 50
 
 # the maximum number of component images in the final output
 max_ref_size: 8000

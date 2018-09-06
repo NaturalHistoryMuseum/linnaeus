@@ -69,4 +69,4 @@ class Component(object):
         return img
 
     def resize(self):
-        return self.img.resize(constants.pixel_size)
+        return self.img.resize((constants.pixel_size, constants.pixel_size))
