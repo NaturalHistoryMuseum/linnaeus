@@ -106,7 +106,7 @@ class BackgroundRemover(object):
         var = np.ceil(edges.std(axis=0))
         deviance = np.ma.array(edges).anom(axis=0)
         deviance = deviance / deviance.std(axis=0)
-        mask = np.ma.masked_greater(deviance, 2).mask
+        mask = np.ma.masked_greater(deviance.data, 2).mask
         colour = tuple(np.ma.masked_where(mask, edges).mean(axis=0).astype(int)[0])
         return cls(colour=colour, original=img_array, variance=var)
 
