@@ -131,17 +131,18 @@ class ReferenceMapFactory(SolutionMapFactory):
         cols = np.tile(np.arange(cn), rn).reshape(rn, cn, 1)
         hsv_pixels = cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL)
         hsv_pixels = np.c_[rows, cols, hsv_pixels]
-        with ReferenceMap() as new_map, ProgressLogger(len(hsv_pixels), 10) as p:
+        with ReferenceMap() as new_map:
             if img.mode == 'RGBA':
                 transparent_mask = pixels[..., 3] > 0
                 hsv_pixels = hsv_pixels[transparent_mask]
             else:
                 hsv_pixels = np.concatenate(hsv_pixels)
-            for pixel in hsv_pixels:
-                rk = CoordinateEntry(np.asscalar(pixel[1]), np.asscalar(pixel[0]))
-                rv = HsvEntry(*[np.asscalar(i) for i in pixel[2:]])
-                new_map.add(rk, rv)
-                p.next()
+            with ProgressLogger(len(hsv_pixels), 10) as p:
+                for pixel in hsv_pixels:
+                    rk = CoordinateEntry(np.asscalar(pixel[1]), np.asscalar(pixel[0]))
+                    rv = HsvEntry(*[np.asscalar(i) for i in pixel[2:]])
+                    new_map.add(rk, rv)
+                    p.next()
             return new_map
 
     @classmethod

@@ -140,4 +140,5 @@ class ProgressLogger(TimeLogger):
             logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
 
     def done(self):
-        logger.debug(f'processed {self.current} items in {dt.now() - self.start}')
+        logger.debug(f'processed {self.current}/{self.total} items in '
+                     f'{dt.now() - self.start}')
