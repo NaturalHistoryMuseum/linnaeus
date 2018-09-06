@@ -78,7 +78,7 @@ class SolutionMapFactory(BaseMapFactory):
     @classmethod
     def defaultpath(cls, identifier):
         return os.path.join('maps',
-                            f'{identifier}_solution_{constants.max_ref_size}_'
+                            f'{identifier}_solution_{str(constants.size)}_'
                             f'{constants.max_components}.json')
 
     @classmethod
@@ -101,7 +101,7 @@ class ReferenceMapFactory(SolutionMapFactory):
     @classmethod
     def defaultpath(cls, identifier):
         return os.path.join('maps',
-                            f'{identifier}_ref_{constants.max_ref_size}.json')
+                            f'{identifier}_ref_{str(constants.size)}.json')
 
     @classmethod
     def deserialise(cls, txt):

@@ -56,6 +56,14 @@ class Size(object):
         if all([x is None for x in [self._area, self._width, self._height]]):
             self._area = '8000c'
 
+    def __str__(self):
+        if self._area is not None:
+            return 'a' + self._area
+        if self._width is not None:
+            return 'w' + self._width
+        if self._height is not None:
+            return 'h' + self._height
+
     def dump(self):
         return {k: v for k, v in {
             'area': self._area,
