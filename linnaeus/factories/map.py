@@ -123,6 +123,7 @@ class ReferenceMapFactory(SolutionMapFactory):
         """
         w, h = img.size
         img = img.resize(constants.size.dimensions(w, h))
+        img = img.convert(mode='RGBA')
         pixels = np.array(img)
         rn = pixels.shape[0]
         cn = pixels.shape[1]
