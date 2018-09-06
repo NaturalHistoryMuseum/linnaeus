@@ -1,7 +1,9 @@
 import logging
 import os
+import re
 import yaml
 from datetime import datetime as dt, timedelta
+import math
 
 
 class Config(object):
@@ -13,10 +15,9 @@ class Config(object):
         else:
             config_dict = {}
         self.max_components = config_dict.get('max_components', 80000)
-        self.pixel_width = config_dict.get('pixel_width', 50)
-        self.pixel_height = config_dict.get('pixel_height', 50)
-        self.pixel_size = (self.pixel_width, self.pixel_height)
-        self.max_ref_size = config_dict.get('max_ref_size', 8000)
+        self.pixel_size = config_dict.get('pixel_size', 50)
+        self.size = Size(self.pixel_size,
+                         **{k: v for k, v in config_dict.items() if k in Size.keys})
         self.saturation_threshold = config_dict.get('saturation_threshold', 50)
         self._log_level = config_dict.get('log_level', 'DEBUG').upper()
         self.dominant_colour_method = config_dict.get('dominant_colour_method',
@@ -33,15 +34,60 @@ class Config(object):
     def dump(self, path):
         config_dict = {
             'max_components': self.max_components,
-            'pixel_width': self.pixel_width,
-            'pixel_height': self.pixel_height,
-            'max_ref_size': self.max_ref_size,
+            'pixel_size': self.pixel_size,
             'saturation_threshold': self.saturation_threshold,
             'log_level': self._log_level,
             'dominant_colour_method': self.dominant_colour_method
             }
+        config_dict.update(self.size.dump())
         with open(path, 'w') as f:
             yaml.dump(config_dict, f, default_flow_style=False)
+
+
+class Size(object):
+    # valid specifiers
+    keys = ['area', 'width', 'height']
+
+    def __init__(self, pixel_size, **kwargs):
+        self._area = kwargs.get('area', None)
+        self._width = kwargs.get('width', None)
+        self._height = kwargs.get('height', None)
+        self._ps = pixel_size
+        if all([x is None for x in [self._area, self._width, self._height]]):
+            self._area = '8000c'
+
+    def dump(self):
+        return {k: v for k, v in {
+            'area': self._area,
+            'width': self._width,
+            'height': self._height,
+            } if v is not None}
+
+    def dimensions(self, image_width, image_height):
+        unit_rgx = re.compile('(c|px)$')
+        w = image_width
+        h = image_height
+        if self._width is not None:
+            val, unit = unit_rgx.split(self._width)[:2]
+            val = int(int(val) / (self._ps if unit == 'px' else 1))
+            new_w = val if val < w else w
+            h = int(h * (new_w / w))
+            w = new_w
+        if self._height is not None:
+            val, unit = unit_rgx.split(self._height)[:2]
+            val = int(int(val) / (self._ps if unit == 'px' else 1))
+            new_h = val if val < h else h
+            w = int(w * (new_h / h))
+            h = new_h
+        if self._area is not None:
+            val, unit = unit_rgx.split(self._area)[:2]
+            val = int(int(val) / (self._ps**2 if unit == 'px' else 1))
+            a = w * h
+            new_a = val if val < a else a
+            adjust = math.sqrt(new_a / a)
+            w = int(w * adjust)
+            h = int(h * adjust)
+        return w, h
 
 
 constants = Config()

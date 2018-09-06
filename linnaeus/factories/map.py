@@ -122,12 +122,7 @@ class ReferenceMapFactory(SolutionMapFactory):
         :return: ReferenceMap
         """
         w, h = img.size
-        current_size = w * h
-        if current_size > constants.max_ref_size:
-            adjust = math.sqrt(constants.max_ref_size / current_size)
-            nw = int(w * adjust)
-            nh = int(h * adjust)
-            img = img.resize((nw, nh))
+        img = img.resize(constants.size.dimensions(w, h))
         pixels = np.array(img)
         rn = pixels.shape[0]
         cn = pixels.shape[1]

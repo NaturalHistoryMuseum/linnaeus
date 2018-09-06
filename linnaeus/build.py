@@ -198,14 +198,14 @@ class Canvas(object):
     def __init__(self, size):
         self.ref_size = size
         self.w, self.h = size
-        self.w *= constants.pixel_width
-        self.h *= constants.pixel_height
+        self.w *= constants.pixel_size
+        self.h *= constants.pixel_size
         self.composite, self.component_id_array = Image.new('RGBA', (self.w, self.h),
                                                             0), np.chararray(size)
 
     def paste(self, col, row, image, component_id):
-        x_offset = col * constants.pixel_width
-        y_offset = row * constants.pixel_height
+        x_offset = col * constants.pixel_size
+        y_offset = row * constants.pixel_size
         self.composite.paste(image, (x_offset, y_offset))
         self.component_id_array[col, row] = component_id
 
