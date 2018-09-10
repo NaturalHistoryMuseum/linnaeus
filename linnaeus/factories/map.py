@@ -134,14 +134,16 @@ class ReferenceMapFactory(SolutionMapFactory):
         return hsv_pixels
 
     @classmethod
-    def _build(cls, img):
+    def _build(cls, img, resize=True):
         """
         Resize the image as necessary and build the map.
         :param img: a PIL image object to build the map from
+        :param resize: True to resize the image based on the config, False to ignore
         :return: ReferenceMap
         """
-        w, h = img.size
-        img = img.resize(constants.size.dimensions(w, h))
+        if resize:
+            w, h = img.size
+            img = img.resize(constants.size.dimensions(w, h))
         img = img.convert(mode='RGBA')
         pixels = np.array(img)
         hsv_pixels = cls.get_hsv_pixels(pixels)
@@ -216,7 +218,7 @@ class ReferenceMapFactory(SolutionMapFactory):
         mask = pixels[..., 0] > 0
         pixels[..., 3][mask] = 0  # then convert white pixels to transparent
         pixels[~mask] = np.array(font_colour)
-        return cls._build(Image.fromarray(pixels, 'RGBA'))
+        return cls._build(Image.fromarray(pixels, 'RGBA'), resize=False)
 
     @classmethod
     def from_qr_data(cls, data, colour=(0, 0, 0, 255), size=1):
@@ -237,7 +239,7 @@ class ReferenceMapFactory(SolutionMapFactory):
         pixels = np.array(img)
         colour = np.array(colour)
         pixels[pixels[..., 3] > 0] = colour
-        return cls._build(Image.fromarray(pixels, 'RGBA'))
+        return cls._build(Image.fromarray(pixels, 'RGBA'), resize=False)
 
 
 class ComponentMapFactory(BaseMapFactory):
