@@ -1,17 +1,16 @@
-import math
-
 import cv2
 import imghdr
 import json
 import numpy as np
 import os
+import qrcode
 import requests
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 
 from linnaeus.common import tryint
 from linnaeus.config import ProgressLogger, constants
-from linnaeus.models import (CombinedEntry, Component, ComponentMap, CoordinateEntry,
+from linnaeus.models import (Component, ComponentMap, CoordinateEntry,
                              HsvEntry, LocationEntry, ReferenceMap, SolutionMap)
 from linnaeus.utils import portal
 from ._base import BaseMapFactory
@@ -84,15 +83,23 @@ class SolutionMapFactory(BaseMapFactory):
     @classmethod
     def deserialise(cls, txt):
         content = json.loads(txt)
-        with SolutionMap() as new_map, ProgressLogger(len(content), 10) as p:
+        with cls.product_class() as new_map, ProgressLogger(len(content), 10) as p:
             for k, v in content.items():
-                rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
-                rv = CombinedEntry(**{
-                    ek: SolutionMap.combined_types[ek](*ev) if isinstance(ev, list) else
-                    SolutionMap.combined_types[ek](ev) for ek, ev in v.items()})
+                rk = cls._deserialisekey(k)
+                rv = cls._deserialisevalue(v)
                 new_map.add(rk, rv)
                 p.next()
             return new_map
+
+    @classmethod
+    def _deserialisekey(cls, k):
+        return cls.product_class.key_type(*[tryint(i) for i in k.split('|')])
+
+    @classmethod
+    def _deserialisevalue(cls, v):
+        return cls.product_class.value_type(**{
+            ek: cls.product_class.combined_types[ek](*ev) if isinstance(ev, list) else
+            cls.product_class.combined_types[ek](ev) for ek, ev in v.items()})
 
 
 class ReferenceMapFactory(SolutionMapFactory):
@@ -104,15 +111,27 @@ class ReferenceMapFactory(SolutionMapFactory):
                             f'{identifier}_ref_{str(constants.size)}.json')
 
     @classmethod
-    def deserialise(cls, txt):
-        content = json.loads(txt)
-        with ReferenceMap() as new_map, ProgressLogger(len(content), 10) as p:
-            for k, v in content.items():
-                rk = CoordinateEntry(*[tryint(i) for i in k.split('|')])
-                rv = HsvEntry(*[tryint(i) for i in v])
-                new_map.add(rk, rv)
-                p.next()
-            return new_map
+    def _deserialisevalue(cls, v):
+        return cls.product_class.value_type(*[tryint(i) for i in v])
+
+    @classmethod
+    def get_hsv_pixels(cls, pixels):
+        """
+        Get labelled (i.e. row number and column number appended) HSV pixels from an
+        array of RGBA pixels.
+        :param pixels: a numpy array of RGBA pixels
+        :return: a numpy array of [row, col, h, s, v] entries
+        """
+        assert pixels.shape[-1] == 4
+        rn = pixels.shape[0]
+        cn = pixels.shape[1]
+        rows = np.repeat(np.arange(rn), cn).reshape(rn, cn, 1)
+        cols = np.tile(np.arange(cn), rn).reshape(rn, cn, 1)
+        hsv_pixels = cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL)
+        hsv_pixels = np.c_[rows, cols, hsv_pixels]
+        transparent_mask = pixels[..., 3] > 0
+        hsv_pixels = hsv_pixels[transparent_mask]
+        return hsv_pixels
 
     @classmethod
     def _build(cls, img):
@@ -125,18 +144,8 @@ class ReferenceMapFactory(SolutionMapFactory):
         img = img.resize(constants.size.dimensions(w, h))
         img = img.convert(mode='RGBA')
         pixels = np.array(img)
-        rn = pixels.shape[0]
-        cn = pixels.shape[1]
-        rows = np.repeat(np.arange(rn), cn).reshape(rn, cn, 1)
-        cols = np.tile(np.arange(cn), rn).reshape(rn, cn, 1)
-        hsv_pixels = cv2.cvtColor(pixels, cv2.COLOR_RGB2HSV_FULL)
-        hsv_pixels = np.c_[rows, cols, hsv_pixels]
+        hsv_pixels = cls.get_hsv_pixels(pixels)
         with ReferenceMap() as new_map:
-            if img.mode == 'RGBA':
-                transparent_mask = pixels[..., 3] > 0
-                hsv_pixels = hsv_pixels[transparent_mask]
-            else:
-                hsv_pixels = np.concatenate(hsv_pixels)
             with ProgressLogger(len(hsv_pixels), 10) as p:
                 for pixel in hsv_pixels:
                     rk = CoordinateEntry(np.asscalar(pixel[1]), np.asscalar(pixel[0]))
@@ -187,6 +196,49 @@ class ReferenceMapFactory(SolutionMapFactory):
         :return: ReferenceMap
         """
         return cls._build(img)
+
+    @classmethod
+    def from_text(cls, text, font_file, font_size=20, font_colour=(0, 0, 0, 255)):
+        """
+        Creates a ReferenceMap from an image of text, rendered by PIL.
+        :param text: the text to render
+        :param font_file: the .ttf or .otf file for the font
+        :param font_size: the size of the rendered text (in px)
+        :param font_colour: the RGBA colour of the rendered text
+        :return: ReferenceMap
+        """
+        font = ImageFont.truetype(font_file, font_size)
+        # draw as binary (b/w) image to avoid antialiasing
+        img = Image.new('1', font.getsize(text), 1)
+        draw = ImageDraw.Draw(img)
+        draw.text((0, 0), text, font=font, fill=0)
+        pixels = np.array(img.convert('RGBA'))
+        mask = pixels[..., 0] > 0
+        pixels[..., 3][mask] = 0  # then convert white pixels to transparent
+        pixels[~mask] = np.array(font_colour)
+        return cls._build(Image.fromarray(pixels, 'RGBA'))
+
+    @classmethod
+    def from_qr_data(cls, data, colour=(0, 0, 0, 255), size=1):
+        """
+        Makes a ReferenceMap from an image of a QR code, generated by qrcode and PIL.
+        :param data: the data to generate the QR code from
+        :param colour: the colour of the QR code blocks
+        :param size: the size of each QR code block
+        :return: ReferenceMap
+        """
+        qr = qrcode.QRCode(
+            box_size=1,
+            border=0
+            )
+
+        qr.add_data(data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color='black', back_color='transparent').get_image()
+        pixels = np.array(img)
+        colour = np.array(colour)
+        pixels[pixels[..., 3] > 0] = colour
+        return cls._build(Image.fromarray(pixels, 'RGBA'))
 
 
 class ComponentMapFactory(BaseMapFactory):
