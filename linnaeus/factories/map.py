@@ -228,10 +228,9 @@ class ReferenceMapFactory(SolutionMapFactory):
         :return: ReferenceMap
         """
         qr = qrcode.QRCode(
-            box_size=1,
+            box_size=size,
             border=0
             )
-
         qr.add_data(data)
         qr.make(fit=True)
         img = qr.make_image(fill_color='black', back_color='transparent').get_image()

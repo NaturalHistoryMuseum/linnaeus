@@ -1,3 +1,4 @@
+import base64
 import click
 import cv2
 import json
@@ -283,7 +284,11 @@ def render(ctx, solution, output, adjust, prefix):
     this is the case, use the '--prefix' flag to specify the location of the components.
     """
     from linnaeus import Builder, MapFactory
-    output = output or os.path.splitext(solution)[0] + '.png'
+    if output is None:
+        *solution_folders, solution_name = os.path.split(solution)
+        solution_folders[-1] = 'outputs'
+        solution_name = os.path.splitext(solution_name)[0] + '.png'
+        output = os.path.join(*solution_folders, solution_name)
     setup_path(ctx, output)
     solution_map = deserialise(ctx, solution, MapFactory.solution())
     canvas = Builder.fill(solution_map, adjust=adjust, prefix=prefix)
@@ -323,7 +328,9 @@ def combine(ctx, inputs, output, **kwargs):
     newmap = deserialise(ctx, inputs[1], MapFactory)
 
     if isinstance(basemap, MapFactory.component().product_class):
-        kwargs = {'prefix': kwargs.get('prefix', '.')}
+        kwargs = {
+            'prefix': kwargs.get('prefix', '.')
+            }
     else:
         if 'offset' in kwargs and len(kwargs['offset']) == 2:
             kwargs['gravity'] = kwargs['offset']
@@ -337,6 +344,48 @@ def combine(ctx, inputs, output, **kwargs):
         output = os.path.join('maps', filename)
     setup_path(ctx, output)
     MapFactory.save_text(output, combined_map.serialise())
+    click.echo(output)
+
+
+@cli.command(short_help='Create a reference map of text.')
+@click.argument('text', type=click.STRING)
+@click.argument('font', type=click.Path(exists=True))
+@click.option('-o', '--output', type=click.Path(),
+              help='Built image output path. Auto-generated if not given.')
+@click.option('-c', '--colour', type=click.INT, nargs=4, default=(0, 0, 0, 255),
+              help='RGBA colour for the text. Defaults to solid black.')
+@click.option('-s', '--size', type=click.INT, default=20,
+              help='Font size in px. Defaults to 20.')
+@click.pass_context
+def textmap(ctx, text, font, output, colour, size):
+    from linnaeus import MapFactory
+
+    iden = os.path.splitext(os.path.split(font)[-1])[0] + f'_{size}px'
+    output = output or f'maps/{iden}.json'
+    setup_path(ctx, output)
+
+    reference_map = MapFactory.reference().from_text(text, font, size, colour)
+    MapFactory.save_text(output, reference_map.serialise())
+    click.echo(output)
+
+
+@cli.command(short_help='Create a reference map of a QR code.')
+@click.argument('data', type=click.STRING)
+@click.option('-o', '--output', type=click.Path(),
+              help='Built image output path. Auto-generated if not given.')
+@click.option('-c', '--colour', type=click.INT, nargs=4, default=(0, 0, 0, 255),
+              help='RGBA colour for the data blocks. Defaults to solid black.')
+@click.option('-s', '--size', type=click.INT, default=20,
+              help='Block size in px. Defaults to 20.')
+@click.pass_context
+def qr(ctx, data, output, colour, size):
+    from linnaeus import MapFactory
+
+    output = output or f'maps/qr_{base64.b64encode(data)}_{size}.json'
+    setup_path(ctx, output)
+
+    reference_map = MapFactory.reference().from_qr_data(data, colour, size)
+    MapFactory.save_text(output, reference_map.serialise())
     click.echo(output)
 
 
