@@ -310,9 +310,13 @@ def makeconfig(ctx):
               help='(Solution/Reference maps only): C(enter), N(orth), S(outh), '
                    'E(ast), or W(est). Can also combine NSEW (e.g. NE for top right '
                    'corner).')
-@click.option('--offset', nargs=2,
-              help='(Solution/Reference maps only): Manually define x, y offset for '
-                   'new map. Overrides --gravity.')
+@click.option('--position', nargs=2,
+              help='(Solution/Reference maps only): Manually define x, y position for '
+                   'new map. Cannot use with --gravity.')
+@click.option('--offset', nargs=2, default=(0,0),
+              help='(Solution/Reference maps only): An x, y offset from the position ('
+                   'whether specified manually via --position or calculated with '
+                   '--gravity).')
 @click.option('--overlay/--no-overlay', default=True,
               help='(Solution/Reference maps only): if True, the new map is added on '
                    'top of the base map. If False, it is added next to the base map.')
@@ -332,9 +336,9 @@ def combine(ctx, inputs, output, **kwargs):
             'prefix': kwargs.get('prefix', '.')
             }
     else:
-        if 'offset' in kwargs and len(kwargs['offset']) == 2:
-            kwargs['gravity'] = kwargs['offset']
-        del kwargs['offset']
+        if 'position' not in kwargs or len(kwargs['position']) != 2:
+            kwargs['position'] = kwargs['gravity']
+        del kwargs['gravity']
         del kwargs['prefix']
 
     combined_map = MapFactory.combine(basemap, newmap, **kwargs)
@@ -348,8 +352,8 @@ def combine(ctx, inputs, output, **kwargs):
 
 
 @cli.command(short_help='Create a reference map of text.')
-@click.argument('text', type=click.STRING)
-@click.argument('font', type=click.Path(exists=True))
+@click.argument('text', type=click.STRING, nargs=-1)
+@click.option('-f', '--font', type=click.Path(exists=True))
 @click.option('-o', '--output', type=click.Path(),
               help='Built image output path. Auto-generated if not given.')
 @click.option('-c', '--colour', type=click.INT, nargs=4, default=(0, 0, 0, 255),
@@ -360,7 +364,9 @@ def combine(ctx, inputs, output, **kwargs):
 def textmap(ctx, text, font, output, colour, size):
     from linnaeus import MapFactory
 
-    iden = os.path.splitext(os.path.split(font)[-1])[0] + f'_{size}px'
+    text = '\n'.join(text)
+    iden = os.path.splitext(os.path.split(font)[-1])[
+               0] + f'-{base64.b64encode(text.encode()).decode()}_{size}px'
     output = output or f'maps/{iden}.json'
     setup_path(ctx, output)
 
@@ -370,18 +376,19 @@ def textmap(ctx, text, font, output, colour, size):
 
 
 @cli.command(short_help='Create a reference map of a QR code.')
-@click.argument('data', type=click.STRING)
+@click.argument('data', type=click.STRING, nargs=-1)
 @click.option('-o', '--output', type=click.Path(),
               help='Built image output path. Auto-generated if not given.')
 @click.option('-c', '--colour', type=click.INT, nargs=4, default=(0, 0, 0, 255),
               help='RGBA colour for the data blocks. Defaults to solid black.')
-@click.option('-s', '--size', type=click.INT, default=20,
-              help='Block size in px. Defaults to 20.')
+@click.option('-s', '--size', type=click.INT, default=1,
+              help='Block size in px. Defaults to 1.')
 @click.pass_context
 def qr(ctx, data, output, colour, size):
     from linnaeus import MapFactory
 
-    output = output or f'maps/qr_{base64.b64encode(data)}_{size}.json'
+    data = ''.join(data)
+    output = output or f'maps/qr-{base64.b64encode(data.encode()).decode()}_{size}.json'
     setup_path(ctx, output)
 
     reference_map = MapFactory.reference().from_qr_data(data, colour, size)

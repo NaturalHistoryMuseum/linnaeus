@@ -20,14 +20,15 @@ class SolutionMapFactory(BaseMapFactory):
     product_class = SolutionMap
 
     @classmethod
-    def combine(cls, basemap, newmap, gravity='C', overlay=True):
+    def combine(cls, basemap, newmap, position='C', offset=(0,0), overlay=True):
         """
         Combine reference maps.
         :param basemap: the first Map
         :param newmap: the new Map to add to the first
-        :param gravity: for calculating the offset; e.g. C (center), N (north),
-                        or a tuple of coordinates to manually specify the offset from
+        :param position: for calculating the position; e.g. C (center), N (north),
+                        or a tuple of coordinates to manually specify the position from
                         top left
+        :param offset: offset from the position
         :param overlay: True to add the new ref on top of the base, False to add
                         it next to the base image with no overlap (ignored if gravity is
                         C or tuple)
@@ -35,10 +36,10 @@ class SolutionMapFactory(BaseMapFactory):
         """
         super(SolutionMapFactory, cls).combine(basemap, newmap)
         base_w, base_h, new_w, new_h = basemap.bounds + newmap.bounds
-        if isinstance(gravity, tuple):
-            x, y = gravity
+        if isinstance(position, tuple):
+            x, y = position
         else:
-            gravity = gravity.upper()
+            gravity = position.upper()
             # find centerpoints
             horizontal = 'C'
             vertical = 'C'
@@ -54,11 +55,16 @@ class SolutionMapFactory(BaseMapFactory):
                 }
             try:
                 horizontal = next(i for i in gravity if i in lookup_h.keys())
+            except StopIteration:
+                pass
+            try:
                 vertical = next(i for i in gravity if i in lookup_v.keys())
             except StopIteration:
                 pass
             x = lookup_h[horizontal]
             y = lookup_v[vertical]
+        x += offset[0]
+        y += offset[1]
         w = max(new_w + x, base_w) - min(x, 0)
         h = max(new_h + y, base_h) - min(y, 0)
         with cls.product_class() as combined_map, ProgressLogger(
@@ -211,14 +217,16 @@ class ReferenceMapFactory(SolutionMapFactory):
         """
         font = ImageFont.truetype(font_file, font_size)
         # draw as binary (b/w) image to avoid antialiasing
-        img = Image.new('1', font.getsize(text), 1)
+        img = Image.new('1', font.getsize_multiline(text), 1)
         draw = ImageDraw.Draw(img)
-        draw.text((0, 0), text, font=font, fill=0)
+        draw.multiline_text((0, 0), text, font=font, fill=0)
         pixels = np.array(img.convert('RGBA'))
         mask = pixels[..., 0] > 0
         pixels[..., 3][mask] = 0  # then convert white pixels to transparent
         pixels[~mask] = np.array(font_colour)
-        return cls._build(Image.fromarray(pixels, 'RGBA'), resize=False)
+        pixels = pixels[pixels[..., 3].sum(axis=1) > 0]  # delete empty rows
+        img = Image.fromarray(pixels, 'RGBA')
+        return cls._build(img, resize=False)
 
     @classmethod
     def from_qr_data(cls, data, colour=(0, 0, 0, 255), size=1):
