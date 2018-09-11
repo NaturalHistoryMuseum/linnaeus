@@ -1,3 +1,4 @@
+import base64
 import click
 import cv2
 import json
@@ -283,7 +284,11 @@ def render(ctx, solution, output, adjust, prefix):
     this is the case, use the '--prefix' flag to specify the location of the components.
     """
     from linnaeus import Builder, MapFactory
-    output = output or os.path.splitext(solution)[0] + '.png'
+    if output is None:
+        *solution_folders, solution_name = os.path.split(solution)
+        solution_folders[-1] = 'outputs'
+        solution_name = os.path.splitext(solution_name)[0] + '.png'
+        output = os.path.join(*solution_folders, solution_name)
     setup_path(ctx, output)
     solution_map = deserialise(ctx, solution, MapFactory.solution())
     canvas = Builder.fill(solution_map, adjust=adjust, prefix=prefix)
@@ -305,9 +310,13 @@ def makeconfig(ctx):
               help='(Solution/Reference maps only): C(enter), N(orth), S(outh), '
                    'E(ast), or W(est). Can also combine NSEW (e.g. NE for top right '
                    'corner).')
-@click.option('--offset', nargs=2,
-              help='(Solution/Reference maps only): Manually define x, y offset for '
-                   'new map. Overrides --gravity.')
+@click.option('--position', nargs=2,
+              help='(Solution/Reference maps only): Manually define x, y position for '
+                   'new map. Cannot use with --gravity.')
+@click.option('--offset', nargs=2, default=(0,0),
+              help='(Solution/Reference maps only): An x, y offset from the position ('
+                   'whether specified manually via --position or calculated with '
+                   '--gravity).')
 @click.option('--overlay/--no-overlay', default=True,
               help='(Solution/Reference maps only): if True, the new map is added on '
                    'top of the base map. If False, it is added next to the base map.')
@@ -323,11 +332,13 @@ def combine(ctx, inputs, output, **kwargs):
     newmap = deserialise(ctx, inputs[1], MapFactory)
 
     if isinstance(basemap, MapFactory.component().product_class):
-        kwargs = {'prefix': kwargs.get('prefix', '.')}
+        kwargs = {
+            'prefix': kwargs.get('prefix', '.')
+            }
     else:
-        if 'offset' in kwargs and len(kwargs['offset']) == 2:
-            kwargs['gravity'] = kwargs['offset']
-        del kwargs['offset']
+        if 'position' not in kwargs or len(kwargs['position']) != 2:
+            kwargs['position'] = kwargs['gravity']
+        del kwargs['gravity']
         del kwargs['prefix']
 
     combined_map = MapFactory.combine(basemap, newmap, **kwargs)
@@ -337,6 +348,51 @@ def combine(ctx, inputs, output, **kwargs):
         output = os.path.join('maps', filename)
     setup_path(ctx, output)
     MapFactory.save_text(output, combined_map.serialise())
+    click.echo(output)
+
+
+@cli.command(short_help='Create a reference map of text.')
+@click.argument('text', type=click.STRING, nargs=-1)
+@click.option('-f', '--font', type=click.Path(exists=True))
+@click.option('-o', '--output', type=click.Path(),
+              help='Built image output path. Auto-generated if not given.')
+@click.option('-c', '--colour', type=click.INT, nargs=4, default=(0, 0, 0, 255),
+              help='RGBA colour for the text. Defaults to solid black.')
+@click.option('-s', '--size', type=click.INT, default=20,
+              help='Font size in px. Defaults to 20.')
+@click.pass_context
+def textmap(ctx, text, font, output, colour, size):
+    from linnaeus import MapFactory
+
+    text = '\n'.join(text)
+    iden = os.path.splitext(os.path.split(font)[-1])[
+               0] + f'-{base64.b64encode(text.encode()).decode()}_{size}px'
+    output = output or f'maps/{iden}.json'
+    setup_path(ctx, output)
+
+    reference_map = MapFactory.reference().from_text(text, font, size, colour)
+    MapFactory.save_text(output, reference_map.serialise())
+    click.echo(output)
+
+
+@cli.command(short_help='Create a reference map of a QR code.')
+@click.argument('data', type=click.STRING, nargs=-1)
+@click.option('-o', '--output', type=click.Path(),
+              help='Built image output path. Auto-generated if not given.')
+@click.option('-c', '--colour', type=click.INT, nargs=4, default=(0, 0, 0, 255),
+              help='RGBA colour for the data blocks. Defaults to solid black.')
+@click.option('-s', '--size', type=click.INT, default=1,
+              help='Block size in px. Defaults to 1.')
+@click.pass_context
+def qr(ctx, data, output, colour, size):
+    from linnaeus import MapFactory
+
+    data = ''.join(data)
+    output = output or f'maps/qr-{base64.b64encode(data.encode()).decode()}_{size}.json'
+    setup_path(ctx, output)
+
+    reference_map = MapFactory.reference().from_qr_data(data, colour, size)
+    MapFactory.save_text(output, reference_map.serialise())
     click.echo(output)
 
 
