@@ -13,3 +13,4 @@ scipy
 scikit-learn
 cached-property
 click
+qrcode
