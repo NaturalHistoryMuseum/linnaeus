@@ -1,7 +1,12 @@
+import math
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+from scipy import ndimage as ndi
+from skimage import filters, future
+from skimage.morphology import disk, watershed
 
 
 def show(img):
@@ -89,7 +94,7 @@ class BackgroundRemover(object):
         var = np.ceil(corners.std(axis=0))
         deviance = abs(np.ma.array(corners).anom(axis=0))
         mask = np.ma.masked_less_equal(deviance, 2).mask
-        colour = tuple(np.ma.masked_where(~mask, corners).mean(axis=0).astype(int))
+        colour = tuple(np.ma.masked_where(~mask, corners).mean(axis=0).astype(int)[0])
         return cls(colour=colour, original=img_array, variance=var)
 
     @classmethod
@@ -110,6 +115,20 @@ class BackgroundRemover(object):
         colour = tuple(np.ma.masked_where(mask, edges).mean(axis=0).astype(int)[0])
         return cls(colour=colour, original=img_array, variance=var)
 
+    def _matches_background(self, colour):
+        """
+        Returns True if the colour roughly matches the background colour.
+        :param colour: an rgb colour
+        :return: bool
+        """
+        colour = colourspace(colour, cv2.COLOR_RGB2HSV_FULL)
+        tol = np.array([5, 10, 15])
+        lower_bound = (self.colour - self.variance - tol)
+        upper_bound = (self.colour + self.variance + tol)
+        is_in_range = (lower_bound <= colour).all() and (
+                upper_bound >= colour).all()
+        return is_in_range
+
     def _background_contour(self, contour):
         """
         Returns True if the average colour within the contour is roughly the same as
@@ -122,13 +141,8 @@ class BackgroundRemover(object):
         cm = cv2.drawContours(cm, [contour], 0, 255, -1)
         cm = cm > 0
         cimg = self.blur(self.original.copy())
-        avg_colour = colourspace(cimg[cm].mean(axis=0), cv2.COLOR_RGB2HSV_FULL)
-        tol = np.array([5, 10, 15])
-        lower_bound = (self.colour - self.variance - tol)
-        upper_bound = (self.colour + self.variance + tol)
-        is_in_range = (lower_bound <= avg_colour).all() and (
-                upper_bound >= avg_colour).all()
-        return is_in_range
+        avg_colour = cimg[cm].mean(axis=0)
+        return self._matches_background(avg_colour)
 
     def _fill_edge(self, contour):
         """
@@ -156,7 +170,7 @@ class BackgroundRemover(object):
         filled_contour.append(sections[-1])
         return np.concatenate(filled_contour)
 
-    def create_mask(self, fill_edge=True, holes=True, erosion=2):
+    def create_mask(self, fill_edge=True, holes=True, erosion=2, use_sobel=False):
         """
         Creates a numpy boolean array, the same size as the original image,
         where False is the background and True is the subject.
@@ -166,43 +180,67 @@ class BackgroundRemover(object):
                         coloured edges
         :return: a mask as a numpy boolean array
         """
-        img = cv2.medianBlur(self.original, 7)
         h, w, _ = self.original.shape
+        x = math.floor((h * w) ** (1 / 7))
+        x = x + 1 if x % 2 == 0 else x
+        img = cv2.medianBlur(self.original, x)
         if self.bg_image is None:
-            canny = cv2.Canny(img, 50, 110)
-            threshold = cv2.dilate(canny, None, iterations=1)
+            bg_image = np.tile(self.colour, h * w).reshape(img.shape).astype(img.dtype)
+            hsv_img = cv2.cvtColor(img, cv2.COLOR_RGB2HSV_FULL)
+            hsv_bg = cv2.cvtColor(bg_image, cv2.COLOR_RGB2HSV_FULL)
+            diff = cv2.absdiff(hsv_img, hsv_bg)
+            diff = diff[..., 0] + (diff[..., 1] * 0.5) + (diff[..., 2] * 0.7)
+            diff = ((diff / diff.max()) * 255).astype(img.dtype)
+            show(diff)
+            markers = np.maximum(filters.rank.bottomhat(diff, disk(5)), filters.sobel(diff))
+            markers = np.maximum(filters.rank.gradient(diff, disk(5)), markers)
+            show(markers)
+            markers = ndi.label(markers < 10)[0]
+            if use_sobel:
+                gradient = filters.sobel(diff)
+            else:
+                gradient = filters.rank.gradient(diff, disk(2))
+            labels = watershed(gradient, markers)
+            g = future.graph.rag_mean_color(img, labels)
+            bg_areas = [v for k, v in g.nodes.items() if
+                        self._matches_background(v['mean color'])]
+            mask = np.isin(labels, [v['labels'][0] for v in bg_areas])
+            contour_mask = np.zeros((h, w)).astype(np.uint8)
+            contour_mask = cv2.dilate(contour_mask, None, iterations=erosion)
+            contour_mask = cv2.erode(contour_mask, None, iterations=erosion)
+            contour_mask[~mask] = 1
         else:
             delta = cv2.absdiff(img, self.bg_image)
             grey_delta = cv2.cvtColor(delta, cv2.COLOR_RGB2GRAY)
             threshold = cv2.adaptiveThreshold(grey_delta, 255,
                                               cv2.ADAPTIVE_THRESH_MEAN_C,
                                               cv2.THRESH_BINARY_INV, 21, 5)
-        border = 5
-        bordered = cv2.copyMakeBorder(threshold, border, border, border, border,
-                                      cv2.BORDER_CONSTANT, 0)
-        im2, cont, hier = cv2.findContours(bordered, cv2.RETR_TREE,
-                                           cv2.CHAIN_APPROX_SIMPLE)
-        contour_stats = list(
-            zip([c - border for c in cont], hier.reshape(-1, 4), range(len(cont))))
+            border = 5
+            bordered = cv2.copyMakeBorder(threshold, border, border, border, border,
+                                          cv2.BORDER_CONSTANT, 0)
+            im2, cont, hier = cv2.findContours(bordered, cv2.RETR_TREE,
+                                               cv2.CHAIN_APPROX_SIMPLE)
+            contour_stats = list(
+                zip([c - border for c in cont], hier.reshape(-1, 4), range(len(cont))))
 
-        parent_contours = []
-        child_contours = []
-        for parent in [c for c in contour_stats if c[1][3] == -1]:
-            p = self._fill_edge(parent[0]) if fill_edge else parent[0]
-            if not self._background_contour(p):
-                parent_contours.append(p)
-            if holes:
-                child_contours += [child[0] for child in contour_stats
-                                   if child[1][3] == parent[2]
-                                   and cv2.contourArea(child[0]) > (h * w) * 0.001
-                                   and self._background_contour(child[0])]
-        contour_mask = np.zeros((h, w)).astype(np.uint8)
-        # have to add contours in a loop so they don't cancel each other out
-        for p in parent_contours:
-            contour_mask = cv2.drawContours(contour_mask, [p], -1, 255, -1)
-        for c in child_contours:
-            contour_mask = cv2.drawContours(contour_mask, [c], -1, 0, -1)
-        contour_mask = cv2.erode(contour_mask, None, iterations=erosion)
+            parent_contours = []
+            child_contours = []
+            for parent in [c for c in contour_stats if c[1][3] == -1]:
+                p = self._fill_edge(parent[0]) if fill_edge else parent[0]
+                if not self._background_contour(p):
+                    parent_contours.append(p)
+                if holes:
+                    child_contours += [child[0] for child in contour_stats
+                                       if child[1][3] == parent[2]
+                                       and cv2.contourArea(child[0]) > (h * w) * 0.001
+                                       and self._background_contour(child[0])]
+            contour_mask = np.zeros((h, w)).astype(np.uint8)
+            # have to add contours in a loop so they don't cancel each other out
+            for p in parent_contours:
+                contour_mask = cv2.drawContours(contour_mask, [p], -1, 255, -1)
+            for c in child_contours:
+                contour_mask = cv2.drawContours(contour_mask, [c], -1, 0, -1)
+            contour_mask = cv2.erode(contour_mask, None, iterations=erosion)
         mask_rgba = cv2.cvtColor(contour_mask, cv2.COLOR_GRAY2RGBA)
         mask = mask_rgba[..., 0] == 0
         return mask

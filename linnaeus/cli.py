@@ -313,7 +313,7 @@ def makeconfig(ctx):
 @click.option('--position', nargs=2,
               help='(Solution/Reference maps only): Manually define x, y position for '
                    'new map. Cannot use with --gravity.')
-@click.option('--offset', nargs=2, default=(0,0),
+@click.option('--offset', nargs=2, default=(0, 0),
               help='(Solution/Reference maps only): An x, y offset from the position ('
                    'whether specified manually via --position or calculated with '
                    '--gravity).')
@@ -425,8 +425,11 @@ def prepro(ctx):
 @click.option('-e', '--erode', type=click.INT, default=2,
               help='Erodes the mask before applying to remove colour edges and other '
                    'artefacts.')
+@click.option('--sobel', is_flag=True, default=False,
+              help='Use a Sobel filter to detect the edges instead of a gradient.')
 @click.pass_context
-def removebg(ctx, image, colour, background, output, corners, fill_edges, holes, erode):
+def removebg(ctx, image, colour, background, output, corners, fill_edges, holes, erode,
+             sobel):
     """
     Remove the background from an image (i.e. an image to be used as a reference) and
     save it. Intended for use on images with a clearly defined subject against a plain
@@ -445,7 +448,7 @@ def removebg(ctx, image, colour, background, output, corners, fill_edges, holes,
     else:
         bg = BackgroundRemover.from_edges(img)
     masked_img = Image.fromarray(
-        bg.apply(bg.create_mask(fill_edges, holes, erosion=erode)))
+        bg.apply(bg.create_mask(fill_edges, holes, erosion=erode, use_sobel=sobel)))
     output = output or os.path.splitext(image)[0] + '_bg.png'
     masked_img.save(output)
     click.echo(output)
