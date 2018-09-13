@@ -57,9 +57,10 @@ class Downloader(object):
                 break
         return assets
 
-    def _download_one(self, asset_data, detect):
+    def _download_one(self, asset_data, detect, formatter):
         img = self.get(asset_data)
-        img = self.format(img, detect)
+        if formatter:
+            img = self.format(img, detect)
         if img is not None:
             self.save(img, asset_data)
             self._progress(f'{asset_data.get("assetID")}')
@@ -68,7 +69,7 @@ class Downloader(object):
         print(txt, end='\r')
         sys.stdout.flush()
 
-    def download(self, assets, detect=True, redownload=False):
+    def download(self, assets, detect=True, redownload=False, formatter=True):
         if not redownload:
             downloaded = [i.split('.')[0] for i in os.listdir(self.folder)]
             assets = [a for a in assets if a.get('assetID') not in downloaded]
@@ -76,4 +77,4 @@ class Downloader(object):
         total = len(assets)
         print(total)
         with futures.ThreadPoolExecutor(workers) as executor:
-            executor.map(lambda x: self._download_one(x, detect), assets)
+            executor.map(lambda x: self._download_one(x, detect, formatter), assets)
