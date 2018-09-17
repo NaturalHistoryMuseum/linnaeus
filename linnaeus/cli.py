@@ -110,8 +110,12 @@ def cli(ctx, quiet, delimiter):
 @click.argument('inputs', type=click.Path(exists=True), nargs=-1)
 @click.option('-o', '--output', type=click.Path(),
               help='Map save path. Auto-generated if not supplied.')
+@click.option('--resize/--no-resize', default=True,
+              help='Whether or not to resize the image. Unless the image is TINY or '
+                   'you really want to preserve every single pixel, leave this alone. '
+                   'Only for reference maps.')
 @click.pass_context
-def makemap(ctx, inputs, output):
+def makemap(ctx, inputs, output, resize):
     """
     Creates a reference map or component map.
 
@@ -148,7 +152,7 @@ def makemap(ctx, inputs, output):
             raise click.Abort
         output = output or MapFactory.reference().defaultpath(iden)
         setup_path(ctx, output)
-        reference_map = MapFactory.reference().from_image_local(inputs)
+        reference_map = MapFactory.reference().from_image_local(inputs, resize)
         MapFactory.save_text(output, reference_map.serialise())
     else:
         echo(ctx, 'Cannot identify target type.', err=True)

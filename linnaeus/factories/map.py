@@ -163,17 +163,17 @@ class ReferenceMapFactory(SolutionMapFactory):
             return new_map
 
     @classmethod
-    def from_image_local(cls, filepath):
+    def from_image_local(cls, filepath, resize=True):
         """
         Creates a ReferenceMap from a locally saved image file.
         :param filepath: the path to the image file
         :return: ReferenceMap
         """
         img = Image.open(filepath)
-        return cls._build(img)
+        return cls._build(img, resize)
 
     @classmethod
-    def from_image_url(cls, url):
+    def from_image_url(cls, url, resize=True):
         """
         Creates a ReferenceMap from an image that can be downloaded from a URL.
         :param url: the URL of the image
@@ -182,28 +182,28 @@ class ReferenceMapFactory(SolutionMapFactory):
         try:
             r = requests.get(url, timeout=10)
             img = Image.open(BytesIO(r.content))
-            return cls._build(img)
+            return cls._build(img, resize)
         except requests.ReadTimeout:
             raise requests.ReadTimeout('Failed to download reference image.')
 
     @classmethod
-    def from_image_bytes(cls, bytestring):
+    def from_image_bytes(cls, bytestring, resize=True):
         """
         Creates a ReferenceMap from an image in its raw bytes form.
         :param bytestring: the bytes of the image
         :return: ReferenceMap
         """
         img = Image.open(BytesIO(bytestring))
-        return cls._build(img)
+        return cls._build(img, resize)
 
     @classmethod
-    def from_image_pil(cls, img):
+    def from_image_pil(cls, img, resize=True):
         """
         Creates a ReferenceMap from a PIL Image object.
         :param img: the image in PIL object form
         :return: ReferenceMap
         """
-        return cls._build(img)
+        return cls._build(img, resize)
 
     @classmethod
     def from_text(cls, text, font_file, font_size=20, font_colour=(0, 0, 0, 255)):
