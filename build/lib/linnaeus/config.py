@@ -69,7 +69,7 @@ class Size(object):
             'area': self._area,
             'width': self._width,
             'height': self._height,
-            } if v is not None}
+            }.items() if v is not None}
 
     def dimensions(self, image_width, image_height):
         unit_rgx = re.compile('(c|px)$')
