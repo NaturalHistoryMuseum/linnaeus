@@ -2,7 +2,6 @@ README.md
 setup.py
 linnaeus/__init__.py
 linnaeus/build.py
-linnaeus/cli.py
 linnaeus/common.py
 linnaeus/config.py
 linnaeus.egg-info/PKG-INFO
@@ -11,6 +10,13 @@ linnaeus.egg-info/dependency_links.txt
 linnaeus.egg-info/entry_points.txt
 linnaeus.egg-info/requires.txt
 linnaeus.egg-info/top_level.txt
+linnaeus/cli/__init__.py
+linnaeus/cli/_decorators.py
+linnaeus/cli/_utils.py
+linnaeus/cli/addtl.py
+linnaeus/cli/batch.py
+linnaeus/cli/core.py
+linnaeus/cli/preprocessing.py
 linnaeus/factories/__init__.py
 linnaeus/factories/_base.py
 linnaeus/factories/map.py
@@ -22,6 +28,7 @@ linnaeus/models/entries.py
 linnaeus/models/maps.py
 linnaeus/preprocessing/__init__.py
 linnaeus/preprocessing/bg.py
+linnaeus/preprocessing/exif.py
 linnaeus/utils/__init__.py
 linnaeus/utils/download.py
 linnaeus/utils/draw.py

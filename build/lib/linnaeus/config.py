@@ -1,9 +1,11 @@
+import math
+
+import click
 import logging
 import os
 import re
 import yaml
 from datetime import datetime as dt, timedelta
-import math
 
 
 class Config(object):
@@ -89,7 +91,7 @@ class Size(object):
             h = new_h
         if self._area is not None:
             val, unit = unit_rgx.split(self._area)[:2]
-            val = int(int(val) / (self._ps**2 if unit == 'px' else 1))
+            val = int(int(val) / (self._ps ** 2 if unit == 'px' else 1))
             a = w * h
             new_a = val if val < a else a
             adjust = math.sqrt(new_a / a)
@@ -113,8 +115,21 @@ def silence():
 
 
 class TimeLogger(object):
+    def __init__(self, use_click=False):
+        self._click = use_click
+
+    @property
+    def _msg(self):
+        return f'time taken: {dt.now() - self.start}'
+
+    def echo(self, msg):
+        if self._click:
+            click.echo(msg)
+        else:
+            logger.debug(msg)
+
     def done(self):
-        logger.debug(f'time taken: {dt.now() - self.start}')
+        self.echo(self._msg)
 
     def __enter__(self):
         self.start = dt.now()
@@ -125,7 +140,8 @@ class TimeLogger(object):
 
 
 class ProgressLogger(TimeLogger):
-    def __init__(self, total, n_reports, max_seconds=60):
+    def __init__(self, total, n_reports, max_seconds=60, use_click=False):
+        super(ProgressLogger, self).__init__(use_click)
         self.total = total
         self.current = 0
         self.interval = int(total / n_reports) if total > n_reports else 1
@@ -137,8 +153,8 @@ class ProgressLogger(TimeLogger):
             avg = (dt.now() - self.start).total_seconds() / self.current
             rate = round(1 / avg, 1)
             etr = timedelta(seconds=avg * (self.total - self.current))
-            logger.debug(f'rate: {rate}/s, estimated time remaining: {etr}')
+            self.echo(f'rate: {rate}/s, estimated time remaining: {etr}')
 
-    def done(self):
-        logger.debug(f'processed {self.current}/{self.total} items in '
-                     f'{dt.now() - self.start}')
+    @property
+    def _msg(self):
+        return f'processed {self.current}/{self.total} items in {dt.now() - self.start}'

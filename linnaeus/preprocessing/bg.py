@@ -191,7 +191,8 @@ class BackgroundRemover(object):
             diff = cv2.absdiff(hsv_img, hsv_bg)
             diff = diff[..., 0] + (diff[..., 1] * 0.5) + (diff[..., 2] * 0.7)
             diff = ((diff / diff.max()) * 255).astype(img.dtype)
-            markers = np.maximum(filters.rank.bottomhat(diff, disk(5)), filters.sobel(diff))
+            markers = np.maximum(filters.rank.bottomhat(diff, disk(5)),
+                                 filters.sobel(diff))
             markers = np.maximum(filters.rank.gradient(diff, disk(5)), markers)
             markers = ndi.label(markers < 10)[0]
             if use_sobel:
