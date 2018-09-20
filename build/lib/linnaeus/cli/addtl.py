@@ -17,8 +17,8 @@ def readmap(ctx, inputs):
     """
     from linnaeus import MapFactory
     from linnaeus.models import ReferenceMap
-    read_map = utils.deserialise(ctx, inputs[0], MapFactory)
-    utils.echo(ctx, click.style(inputs[0], bold=True))
+    read_map = utils.deserialise(ctx, inputs, MapFactory)
+    utils.echo(ctx, click.style(inputs, bold=True))
     utils.echo(ctx, f'{type(read_map).__name__} with {len(read_map)} items')
     if isinstance(read_map, ReferenceMap):
         w, h = read_map.bounds

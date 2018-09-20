@@ -19,8 +19,8 @@ def preprocess(ctx):
 @click.pass_context
 def orient(ctx, inputs, output):
     from linnaeus.preprocessing import exif
-    img = exif.apply_orientation(Image.open(inputs[0]))
-    output = output or utils.new_filename(inputs[0], new_folder='preprocess',
+    img = exif.apply_orientation(Image.open(inputs))
+    output = output or utils.new_filename(inputs, new_folder='preprocess',
                                           suffix='orient', new_ext='png')
     return utils.final(ctx, output, lambda x: img.save(x))
 
@@ -58,7 +58,7 @@ def removebg(ctx, inputs, output, colour, bg, corners, fill_edges, holes, erode,
     background.
     """
     from linnaeus.preprocessing import BackgroundRemover, colourspace
-    img = np.array(Image.open(inputs[0]))
+    img = np.array(Image.open(inputs))
     if bg is not None:
         bg_rem = BackgroundRemover(img, bg_image=np.array(Image.open(bg)))
     elif len(colour) == 3:
@@ -72,6 +72,6 @@ def removebg(ctx, inputs, output, colour, bg, corners, fill_edges, holes, erode,
     masked_img = Image.fromarray(
         bg_rem.apply(
             bg_rem.create_mask(fill_edges, holes, erosion=erode, use_sobel=sobel)))
-    output = output or utils.new_filename(inputs[0], new_folder='preprocess',
+    output = output or utils.new_filename(inputs, new_folder='preprocess',
                                           suffix='bg', new_ext='png')
     return utils.final(ctx, output, lambda x: masked_img.save(x))

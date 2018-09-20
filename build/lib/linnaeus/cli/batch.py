@@ -74,11 +74,12 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
         with TimeLogger(True):
             cleaning_list = []
             if greenscreen:
-                reoriented = ctx.invoke(preprocessing.orient, inputs=[img])
-                grnscrn = ctx.invoke(preprocessing.removebg, inputs=[reoriented])
+                reoriented = ctx.invoke(preprocessing.orient, inputs=img)
+                grnscrn = ctx.invoke(preprocessing.removebg, inputs=reoriented)
                 cleaning_list += [reoriented, grnscrn]
                 img = grnscrn
 
+            print(img)
             subject_ref = ctx.invoke(core.makemap, inputs=[img])
             cleaning_list.append(subject_ref)
 
@@ -110,7 +111,7 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
                 completed_sol = ctx.invoke(core.solve, inputs=[subject_ref, components],
                                            output=output, silhouette=silhouette)
 
-            ctx.invoke(core.render, inputs=[completed_sol], prefix=prefix)
+            ctx.invoke(core.render, inputs=completed_sol, prefix=prefix)
             if cleanup:
                 for f in cleaning_list:
                     try:

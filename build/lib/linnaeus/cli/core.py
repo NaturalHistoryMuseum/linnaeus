@@ -181,7 +181,7 @@ def render(ctx, inputs, output, adjust, prefix):
     this is the case, use the '--prefix' flag to specify the location of the components.
     """
     from linnaeus import Builder, MapFactory
-    solution = inputs[0]
+    solution = inputs
     output = output or utils.new_filename(solution, new_folder='outputs', new_ext='png')
     solution_map = utils.deserialise(ctx, solution, MapFactory.solution())
     canvas = Builder.fill(solution_map, adjust=adjust, prefix=prefix)
