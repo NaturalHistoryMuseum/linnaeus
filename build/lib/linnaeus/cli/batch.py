@@ -12,7 +12,6 @@ from . import _decorators as decorators, _utils as utils, addtl, core, preproces
     short_help='Runs a sequence of CLI functions to transform an input image into a '
                'composite with minimal user input.')
 @decorators.inputfiles(nargs=-1)
-@decorators.outputfile
 @click.option('-c', '--components', type=click.Path(exists=True), required=True)
 @click.option('--silhouette', is_flag=True, default=False)
 @click.option('--prefix', type=click.Path(exists=True),
@@ -36,7 +35,7 @@ from . import _decorators as decorators, _utils as utils, addtl, core, preproces
 @click.option('--watch', is_flag=True, default=False,
               help='Watch the folder(s) for new files.')
 @click.pass_context
-def go(ctx, inputs, output, components, silhouette, prefix, combine_with,
+def go(ctx, inputs, components, silhouette, prefix, combine_with,
        combine_gravity, combine_offset, greenscreen, cleanup, watch):
     """
     Runs a sequence of CLI functions to transform an input image into a composite with
@@ -68,11 +67,11 @@ def go(ctx, inputs, output, components, silhouette, prefix, combine_with,
                     os.listdir(fol) if os.path.isfile(os.path.join(fol, f))]
 
     inputs['files'] = list(set(inputs.get('files', []) + folder_files))
-    print(inputs)
 
     def _process(img):
+        output = utils.new_filename(img, new_folder='maps', new_ext='json')
         click.echo(f'Processing {img}')
-        with TimeLogger(True) as t:
+        with TimeLogger(True):
             cleaning_list = []
             if greenscreen:
                 reoriented = ctx.invoke(preprocessing.orient, inputs=[img])
@@ -82,11 +81,8 @@ def go(ctx, inputs, output, components, silhouette, prefix, combine_with,
 
             subject_ref = ctx.invoke(core.makemap, inputs=[img])
             cleaning_list.append(subject_ref)
-            subject_sol = ctx.invoke(core.solve, inputs=[subject_ref, components],
-                                     silhouette=silhouette)
 
             if combine_with is not None:
-                cleaning_list.append(subject_sol)
                 combine_kwargs = {
                     'gravity': combine_gravity,
                     'offset': combine_offset
@@ -99,18 +95,28 @@ def go(ctx, inputs, output, components, silhouette, prefix, combine_with,
                     cleaning_list.append(combined_map)
                     completed_sol = ctx.invoke(core.solve,
                                                inputs=[combined_map, components],
+                                               output=output,
                                                silhouette=False)
                 else:
+                    subject_sol = ctx.invoke(core.solve,
+                                             inputs=[subject_ref, components],
+                                             silhouette=silhouette)
+                    cleaning_list.append(subject_sol)
                     completed_sol = ctx.invoke(core.combine,
                                                inputs=[combine_with, subject_sol],
+                                               output=output,
                                                **combine_kwargs)
             else:
-                completed_sol = subject_sol
+                completed_sol = ctx.invoke(core.solve, inputs=[subject_ref, components],
+                                           output=output, silhouette=silhouette)
 
-            ctx.invoke(core.render, inputs=[completed_sol], prefix=prefix, output=output)
+            ctx.invoke(core.render, inputs=[completed_sol], prefix=prefix)
             if cleanup:
                 for f in cleaning_list:
-                    os.remove(f)
+                    try:
+                        os.remove(f)
+                    except FileNotFoundError:
+                        continue
 
     file_list = inputs.get('files', [])
     for f in file_list:
