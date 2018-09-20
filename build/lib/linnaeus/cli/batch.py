@@ -2,6 +2,7 @@ import itertools
 import time
 
 import click
+import imghdr
 import os
 from watchdog.observers import Observer
 
@@ -66,7 +67,8 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
     folder_files = [os.path.join(fol, f) for fol in inputs.get('folders', []) for f in
                     os.listdir(fol) if os.path.isfile(os.path.join(fol, f))]
 
-    inputs['files'] = list(set(inputs.get('files', []) + folder_files))
+    inputs['files'] = [p for p in set(inputs.get('files', []) + folder_files) if
+                       imghdr.what(p) is not None]
 
     def _process(img):
         output = utils.new_filename(img, new_folder='maps', new_ext='json')
