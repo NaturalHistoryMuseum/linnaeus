@@ -56,7 +56,7 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
 
     from linnaeus import MapFactory
     from linnaeus.config import TimeLogger, ProgressLogger
-    utils.set_quiet(ctx, True)
+    utils.set_quiet(ctx, quiet=False, yes=True)
 
     if len(inputs) == 0:
         click.echo('No input images specified.', err=True)
@@ -67,10 +67,11 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
     folder_files = [os.path.join(fol, f) for fol in inputs.get('folders', []) for f in
                     os.listdir(fol) if os.path.isfile(os.path.join(fol, f))]
 
-    inputs['files'] = [p for p in set(inputs.get('files', []) + folder_files) if
-                       imghdr.what(p) is not None]
+    inputs['files'] = list(set(inputs.get('files', []) + folder_files))
 
     def _process(img):
+        if imghdr.what(img) is None:
+            return
         output = utils.new_filename(img, new_folder='maps', new_ext='json')
         click.echo(f'Processing {img}')
         with TimeLogger(True):
@@ -81,7 +82,6 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
                 cleaning_list += [reoriented, grnscrn]
                 img = grnscrn
 
-            print(img)
             subject_ref = ctx.invoke(core.makemap, inputs=[img])
             cleaning_list.append(subject_ref)
 

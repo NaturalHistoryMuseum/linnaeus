@@ -13,14 +13,17 @@ click_context = {
 @click.option('--quiet', is_flag=True, default=False,
               help='Just output filenames - useful for scripting. WARNING: this will '
                    'auto-accept everything and set the log level to FATAL.')
+@click.option('--yes', is_flag=True, default=False,
+              help='Auto-accept confirmation prompts about overwriting files. If '
+                   '--quiet is on, this is also on.')
 @click.pass_context
-def cli(ctx, quiet):
+def cli(ctx, quiet, yes):
     """
     A command line interface for working with the linnaeus program.
 
     Run 'linnaeus <cmd> -h' for help with each subcommand.
     """
-    utils.set_quiet(ctx, quiet)
+    utils.set_quiet(ctx, quiet, yes)
 
 
 @cli.command(short_help='Creates a reference map or component map.')
