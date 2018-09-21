@@ -67,10 +67,11 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
     folder_files = [os.path.join(fol, f) for fol in inputs.get('folders', []) for f in
                     os.listdir(fol) if os.path.isfile(os.path.join(fol, f))]
 
-    inputs['files'] = [p for p in set(inputs.get('files', []) + folder_files) if
-                       imghdr.what(p) is not None]
+    inputs['files'] = list(set(inputs.get('files', []) + folder_files))
 
     def _process(img):
+        if imghdr.what(img) is None:
+            return
         output = utils.new_filename(img, new_folder='maps', new_ext='json')
         click.echo(f'Processing {img}')
         with TimeLogger(True):
