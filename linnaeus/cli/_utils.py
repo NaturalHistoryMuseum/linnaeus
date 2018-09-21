@@ -24,10 +24,10 @@ def confirm(ctx, msg, **kwargs):
     Requests confirmation if quiet option is not enabled, otherwise auto-accepts and
     suppresses prompt.
     :param ctx: context
-    :param msg: the message to display if quiet is not enabled
-    :param kwargs: keyword args passed to click.echo()
+    :param msg: the message to display if quiet/yes is not enabled
+    :param kwargs: keyword args passed to click.confirm()
     """
-    if not ctx.obj.get('quiet', False):
+    if not ctx.obj.get('yes', False):
         return click.confirm(msg, **kwargs)
     else:
         return True
@@ -95,14 +95,16 @@ def final(ctx, output, save_callback=None):
     return output
 
 
-def set_quiet(ctx, quiet):
+def set_quiet(ctx, quiet, yes):
     """
     Turn off logging.
     :param ctx: context
-    :param quiet: if True, turn logging off; if False, don't
+    :param quiet: if True, turn logging off
+    :param yes: if True, auto-accept confirm prompts
     """
     ctx.obj = {
-        'quiet': quiet
+        'quiet': quiet,
+        'yes': yes or quiet
         }
 
     if quiet:

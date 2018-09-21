@@ -56,7 +56,7 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
 
     from linnaeus import MapFactory
     from linnaeus.config import TimeLogger, ProgressLogger
-    utils.set_quiet(ctx, True)
+    utils.set_quiet(ctx, quiet=False, yes=True)
 
     if len(inputs) == 0:
         click.echo('No input images specified.', err=True)
@@ -82,7 +82,6 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
                 cleaning_list += [reoriented, grnscrn]
                 img = grnscrn
 
-            print(img)
             subject_ref = ctx.invoke(core.makemap, inputs=[img])
             cleaning_list.append(subject_ref)
 
