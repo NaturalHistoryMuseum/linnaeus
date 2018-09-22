@@ -191,7 +191,8 @@ class SolutionMap(ReferenceMap):
     value_type = CombinedEntry
     combined_types = {
         'path': LocationEntry,
-        'target': HsvEntry
+        'target': HsvEntry,
+        'src': HsvEntry
         }
 
     def validate(self, record):
