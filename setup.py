@@ -9,7 +9,7 @@ URL = 'https://github.com/NaturalHistoryMuseum/linnaeus'
 EMAIL = 'data@nhm.ac.uk'
 AUTHOR = 'Alice Butcher'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '1.12.3'
+VERSION = '1.13'
 
 with open('requirements.txt', 'r') as req_file:
     REQUIRED = [r.strip() for r in req_file.readlines()]
