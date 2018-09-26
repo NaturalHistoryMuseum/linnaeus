@@ -5,6 +5,7 @@ import click
 import imghdr
 import os
 from watchdog.observers import Observer
+from PIL import Image
 
 from . import _decorators as decorators, _utils as utils, addtl, core, preprocessing
 
@@ -35,9 +36,11 @@ from . import _decorators as decorators, _utils as utils, addtl, core, preproces
                    'Leaves the completed solution map and the rendered image.')
 @click.option('--watch', is_flag=True, default=False,
               help='Watch the folder(s) for new files.')
+@click.option('--convert', is_flag=True, default=False,
+              help='Convert images to JPEG as a final step to minimise file space.')
 @click.pass_context
 def go(ctx, inputs, components, silhouette, prefix, combine_with,
-       combine_gravity, combine_offset, greenscreen, cleanup, watch):
+       combine_gravity, combine_offset, greenscreen, cleanup, watch, convert):
     """
     Runs a sequence of CLI functions to transform an input image into a composite with
     minimal user input. Can also be used over a set of images (e.g. a folder),
@@ -113,7 +116,13 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
                 completed_sol = ctx.invoke(core.solve, inputs=[subject_ref, components],
                                            output=output, silhouette=silhouette)
 
-            ctx.invoke(core.render, inputs=completed_sol, prefix=prefix)
+            png_img_path = ctx.invoke(core.render, inputs=completed_sol, prefix=prefix)
+            if convert:
+                cleaning_list.append(png_img_path)
+                jpg_img = Image.open(png_img_path)
+                jpg_img_path = utils.new_filename(png_img_path, new_ext='jpg')
+                jpg_img.save(jpg_img_path)
+                utils.echo(ctx, jpg_img_path)
             if cleanup:
                 for f in cleaning_list:
                     try:
@@ -122,8 +131,8 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
                         continue
 
     file_list = inputs.get('files', [])
-    for f in file_list:
-        with ProgressLogger(len(file_list), len(file_list), use_click=True) as p:
+    with ProgressLogger(len(file_list), len(file_list), use_click=True) as p:
+        for f in file_list:
             _process(f)
             p.next()
 

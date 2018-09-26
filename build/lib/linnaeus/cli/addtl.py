@@ -2,7 +2,9 @@ import base64
 import click
 import os
 
+from linnaeus import MapFactory
 from linnaeus.config import constants
+from linnaeus.maputils import update
 from . import _decorators as decorators, _utils as utils
 from .core import cli
 
@@ -75,3 +77,33 @@ def qr(ctx, data, output, colour, size):
 
     return utils.final(ctx, output,
                        lambda x: MapFactory.save_text(x, reference_map.serialise()))
+
+
+@cli.command(
+    short_help='Update a solution map (or batch of solution maps) to include the '
+               'component colour.')
+@decorators.inputfiles(nargs=-1)
+@click.option('-c', '--components', type=click.Path(exists=True), required=True,
+              help='Path to the components file.')
+@click.pass_context
+def addsrc(ctx, inputs, components):
+    component_map = utils.deserialise(ctx, components, MapFactory.component())
+
+    def _update(map_path):
+        try:
+            map_ = utils.deserialise(ctx, map_path, MapFactory.solution())
+            if not isinstance(map_, MapFactory.solution().product_class):
+                return
+        except:
+            return
+        utils.echo(ctx, f'Updating {map_path}...')
+        update.add_src(map_, component_map, map_path)
+
+    for path in inputs:
+        if os.path.isdir(path):
+            files = [os.path.join(path, f) for f in os.listdir(path) if
+                     f.endswith('.json')]
+            for f in files:
+                _update(f)
+        else:
+            _update(path)

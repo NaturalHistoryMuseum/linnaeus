@@ -6,7 +6,7 @@ from scipy import sparse
 from sklearn.metrics.pairwise import pairwise_distances
 
 from .config import ProgressLogger, TimeLogger, constants, logger
-from .models import CombinedEntry, Component, SolutionMap, HsvEntry
+from .models import CombinedEntry, Component, HsvEntry, SolutionMap
 
 
 @njit
@@ -143,7 +143,8 @@ class Builder(object):
                         pixel = ref_map.worker(t)
                         comp = comp_map.task(h, ref_map_len)
                         combined_value = CombinedEntry(path=comp.key,
-                                                       target=pixel.value)
+                                                       target=pixel.value,
+                                                       src=comp.value)
                         solution.add(pixel.key, combined_value)
                     p.next()
                 logger.debug('finished solving')
@@ -156,7 +157,8 @@ class Builder(object):
     @classmethod
     def silhouette(cls, ref_map, comp_map):
         logger.debug('building arrays')
-        comp_records = np.c_[np.arange(len(comp_map)), [r.value.array for r in comp_map.records]]
+        comp_records = np.c_[
+            np.arange(len(comp_map)), [r.value.array for r in comp_map.records]]
         logger.debug('removing unnecessary records')
         parsort = np.argpartition(comp_records[:, 3], len(ref_map))
         comp_records = comp_records[parsort][:len(ref_map)]
@@ -169,7 +171,8 @@ class Builder(object):
             for i, pixel in enumerate(ref_map.records):
                 comp = comp_map.records[comp_records[i, 0]]
                 combined_value = CombinedEntry(path=comp.key,
-                                               target=HsvEntry(0, 0, 0))
+                                               target=HsvEntry(0, 0, 0),
+                                               src=comp.value)
                 solution.add(pixel.key, combined_value)
                 p.next()
         logger.debug('finished solving')
@@ -183,12 +186,15 @@ class Builder(object):
         canvas = Canvas(solution_map.bounds)
         with ProgressLogger(len(solution_map), 10) as p:
             for record in solution_map.records:
-                component = Component(record.value.entries['path'].get(prefix))
-                target = record.value.entries.get('target', None)
+                entries = record.value.entries
+                colour = entries.get('src', None)
+                component = Component(entries['path'].get(prefix),
+                                      dominant_colour=colour.array
+                                      if colour is not None else None)
+                target = entries.get('target', None)
                 img = component.adjust(
                     *target.entry) if adjust and target is not None else component.img
-                canvas.paste(record.key.x, record.key.y, img,
-                             record.value.entries['path'])
+                canvas.paste(record.key.x, record.key.y, img, entries['path'])
                 p.next()
         logger.debug('image finished')
         return canvas

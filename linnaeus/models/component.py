@@ -7,14 +7,14 @@ from linnaeus.utils import Formatter
 
 
 class Component(object):
-    def __init__(self, img: Image, location=None):
+    def __init__(self, img: Image, location=None, dominant_colour=None):
         if img.mode != 'RGB':
             img = img.convert('RGB')
         self.img = Formatter.resize(img)
         self.location = location
 
         self.array = np.array(self.img)
-        self._dominant = None
+        self._dominant = dominant_colour
 
     def _get_dominant(self, f):
         hsv = common.hsv_pixels(self.img)

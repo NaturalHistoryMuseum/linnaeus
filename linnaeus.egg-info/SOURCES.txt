@@ -22,6 +22,7 @@ linnaeus/factories/_base.py
 linnaeus/factories/map.py
 linnaeus/maputils/__init__.py
 linnaeus/maputils/clean.py
+linnaeus/maputils/update.py
 linnaeus/models/__init__.py
 linnaeus/models/component.py
 linnaeus/models/entries.py
