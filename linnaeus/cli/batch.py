@@ -120,6 +120,7 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
             if convert:
                 cleaning_list.append(png_img_path)
                 jpg_img = Image.open(png_img_path)
+                jpg_img = jpg_img.convert(mode='RGB')
                 jpg_img_path = utils.new_filename(png_img_path, new_ext='jpg')
                 jpg_img.save(jpg_img_path)
                 utils.echo(ctx, jpg_img_path)
