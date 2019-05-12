@@ -4,9 +4,9 @@ import requests
 
 
 class API(object):
-    base_url = 'http://data.nhm.ac.uk/api/3'
+    base_url = 'https://data.nhm.ac.uk/api/3'
     COLLECTIONS = '05ff2255-c38a-40c9-b657-4ccb55ab2feb'
-    asset_url = 'http://www.nhm.ac.uk/services/media-store/asset/{0}/contents/preview'
+    asset_url = 'https://www.nhm.ac.uk/services/media-store/asset/{0}/contents/preview'
 
     @classmethod
     def get_result(cls, response):
@@ -58,12 +58,14 @@ class ResultsIterator(object):
         self.params['offset'] = self.offset
         r = requests.get(self.url, params=self.params)
         if not r.ok:
+            print(f'HTTP request failed ({r.status_code}) for {self.url}.')
             raise StopIteration
         result = API.get_result(r)
         if result is None or (
                 self.records_only and 'records' not in result) or self.offset >= \
                 result.get(
                 'total', 0):
+            print('Nothing else in queue.')
             raise StopIteration
         else:
             self.offset += len(result['records'])
