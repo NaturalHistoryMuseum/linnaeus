@@ -34,7 +34,7 @@ class API(object):
     @classmethod
     def assets(cls, resource_id, offset=0, limit=100, query=None, **filters):
         url = cls.base_url + '/action/datastore_search'
-        filters['_has_multimedia'] = True
+        filters['_has_image'] = True
         params = API.get_params(filters, query, resource_id=resource_id, limit=limit)
         return AssetIterator(url, offset, True, **params)
 
@@ -79,7 +79,7 @@ class AssetIterator(ResultsIterator):
         records = super(AssetIterator, self).__next__()
         assets = []
         for record in records:
-            media = json.loads(record.get('associatedMedia'))
+            media = record.get('associatedMedia')
             assets += media
         if len(assets) > 0:
             return assets
