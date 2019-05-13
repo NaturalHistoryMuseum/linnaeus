@@ -14,7 +14,7 @@ class Formatter(object):
         kernel = np.ones((3, 3), np.uint8)
         opening = cv2.morphologyEx(threshold, cv2.MORPH_OPEN, kernel, iterations=5)
         dilated = cv2.dilate(opening, kernel, iterations=5)
-        img, contours, hier = cv2.findContours(dilated, cv2.RETR_EXTERNAL,
+        im, contours, hier = cv2.findContours(dilated, cv2.RETR_EXTERNAL,
                                                cv2.CHAIN_APPROX_SIMPLE)
         try:
             largest_contour = sorted(contours, key=lambda c: cv2.contourArea(c))[-1]
