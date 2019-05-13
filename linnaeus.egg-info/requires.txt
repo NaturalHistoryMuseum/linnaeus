@@ -1,5 +1,5 @@
 numpy
-opencv-python
+opencv-python==3.4.3.18
 ortools
 pillow>=5.2.0
 requests
