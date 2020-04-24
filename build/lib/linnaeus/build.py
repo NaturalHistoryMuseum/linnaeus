@@ -216,6 +216,8 @@ class Canvas(object):
         self.component_id_array[col, row] = component_id
 
     def save(self, fn):
+        if not fn.endswith('.png'):
+            self.composite = self.composite.convert(mode='RGB')
         self.composite.save(fn)
 
 
