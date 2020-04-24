@@ -28,6 +28,8 @@ class Component(object):
             mask = np.apply_along_axis(lambda x: x.tolist() in most_freq, 1,
                                        rounded)
             dom = data[mask].mean(axis=0).astype(int).tolist()
+        elif constants.dominant_colour_method == 'saturated':
+            dom = data[data[..., 1] >= constants.saturation_threshold].mean(axis=0).astype(int).tolist()
         else:
             # avg
             dom = data.mean(axis=0).astype(int).tolist()

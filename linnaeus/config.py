@@ -20,7 +20,7 @@ class Config(object):
         self.pixel_size = config_dict.get('pixel_size', 50)
         self.size = Size(self.pixel_size,
                          **{k: v for k, v in config_dict.items() if k in Size.keys})
-        self.saturation_threshold = config_dict.get('saturation_threshold', 50)
+        self.saturation_threshold = config_dict.get('saturation_threshold', 100)
         self._log_level = config_dict.get('log_level', 'DEBUG').upper()
         self.dominant_colour_method = config_dict.get('dominant_colour_method',
                                                       'average')

@@ -80,7 +80,7 @@ class AssetIterator(ResultsIterator):
         assets = []
         for record in records:
             media = record.get('associatedMedia')
-            assets += json.loads(media)
+            assets += json.loads(media) if isinstance(media, str) else media
         if len(assets) > 0:
             return assets
         else:

@@ -14,7 +14,7 @@ from .format import Formatter
 
 class Downloader(object):
     asset_rgx = re.compile(
-        r'http://www\.nhm\.ac\.uk/services/media-store/asset/(\w+)/contents/.+')
+        r'https?://www\.nhm\.ac\.uk/services/media-store/asset/(\w+)/contents/.+')
 
     def __init__(self, folder):
         self.folder = folder

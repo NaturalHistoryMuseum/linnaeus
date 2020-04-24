@@ -9,7 +9,7 @@ URL = 'https://github.com/NaturalHistoryMuseum/linnaeus'
 EMAIL = 'data@nhm.ac.uk'
 AUTHOR = 'Alice Butcher'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '1.13.2'
+VERSION = '1.14.0'
 
 with open('requirements.txt', 'r') as req_file:
     REQUIRED = [r.strip() for r in req_file.readlines()]
@@ -26,6 +26,9 @@ setup(
     packages=find_packages(exclude=('tests',)),
     install_requires=REQUIRED,
     include_package_data=True,
+    package_data={
+        'linnaeus': ['utils/scales.pkl']
+        },
     entry_points='''
         [console_scripts]
         linnaeus=linnaeus.cli:cli
