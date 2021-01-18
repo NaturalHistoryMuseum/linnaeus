@@ -159,9 +159,9 @@ class Builder(object):
         logger.debug('building arrays')
         comp_records = np.c_[
             np.arange(len(comp_map)), [r.value.array for r in comp_map.records]]
-        logger.debug('removing unnecessary records')
-        parsort = np.argpartition(comp_records[:, 3], len(ref_map))
-        comp_records = comp_records[parsort][:len(ref_map)]
+        logger.debug('choosing random sample')
+        parsort = np.random.choice(comp_records[:,0], len(ref_map))
+        comp_records = comp_records[parsort]
         if len(comp_records) < len(ref_map):
             raise SolveError
         np.random.shuffle(comp_records)
