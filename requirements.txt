@@ -16,3 +16,4 @@ click
 qrcode
 scikit-image
 watchdog
+filetype

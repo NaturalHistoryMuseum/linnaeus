@@ -2,7 +2,7 @@ import itertools
 import time
 
 import click
-import imghdr
+import filetype
 import os
 from watchdog.observers import Observer
 from PIL import Image
@@ -73,7 +73,7 @@ def go(ctx, inputs, components, silhouette, prefix, combine_with,
     inputs['files'] = list(set(inputs.get('files', []) + folder_files))
 
     def _process(img):
-        if imghdr.what(img) is None:
+        if filetype.is_image(img) is None:
             return
         output = utils.new_filename(img, new_folder='maps', new_ext='json')
         click.echo(f'Processing {img}')
