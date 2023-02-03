@@ -1,12 +1,11 @@
-Metadata-Version: 1.2
+Metadata-Version: 2.1
 Name: linnaeus
-Version: 1.14.2
+Version: 1.14.3
 Summary: Recreate reference images using tiny images as pixels.
 Home-page: https://github.com/NaturalHistoryMuseum/linnaeus
 Author: Alice Butcher
 Author-email: data@nhm.ac.uk
 License: MIT
-Description: Recreate reference images using tiny images as pixels.
 Platform: UNKNOWN
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python
@@ -14,3 +13,6 @@ Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: Implementation :: CPython
 Requires-Python: >=3.6.0
+
+Recreate reference images using tiny images as pixels.
+

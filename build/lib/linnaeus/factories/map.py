@@ -1,5 +1,5 @@
 import cv2
-import imghdr
+import filetype
 import json
 import numpy as np
 import os
@@ -324,7 +324,7 @@ class ComponentMapFactory(BaseMapFactory):
         for folder in folders:
             for dirpath, dirnames, filenames in os.walk(folder):
                 paths = [os.path.join(dirpath, f) for f in filenames]
-                files += [p for p in paths if imghdr.what(p) is not None]
+                files += [p for p in paths if filetype.is_image(p)]
         for f in files:
             try:
                 components.append(Component(Image.open(f), f))

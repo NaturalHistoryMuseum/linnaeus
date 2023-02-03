@@ -160,7 +160,7 @@ class Builder(object):
         comp_records = np.c_[
             np.arange(len(comp_map)), [r.value.array for r in comp_map.records]]
         logger.debug('choosing random sample')
-        parsort = np.random.choice(comp_records[:,0], len(ref_map))
+        parsort = np.random.choice(comp_records[:,0], len(ref_map), replace=False)
         comp_records = comp_records[parsort]
         if len(comp_records) < len(ref_map):
             raise SolveError
@@ -198,6 +198,11 @@ class Builder(object):
                 p.next()
         logger.debug('image finished')
         return canvas
+
+    @classmethod
+    def extract_and_fill(cls, solution_map: SolutionMap):
+        logger.debug('extracting blocks from matched images')
+        canvas = Canvas(solution_map.bounds)
 
 
 class Canvas(object):

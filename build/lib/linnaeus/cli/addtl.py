@@ -7,6 +7,7 @@ from linnaeus.config import constants
 from linnaeus.maputils import update
 from . import _decorators as decorators, _utils as utils
 from .core import cli
+import re
 
 
 @cli.command(short_help='Displays some details about a serialised map file.')
@@ -48,8 +49,7 @@ def textmap(ctx, text, font, output, colour, size):
     from linnaeus import MapFactory
 
     text = '\n'.join(text)
-    iden = os.path.splitext(os.path.split(font)[-1])[
-               0] + f'-{base64.b64encode(text.encode()).decode()}_{size}px'
+    iden = f'{re.sub("[^A-Za-z0-9_]", "_", text[:20])}_{size}px'
     output = output or f'maps/{iden}.json'
 
     reference_map = MapFactory.reference().from_text(text, font, size, colour)

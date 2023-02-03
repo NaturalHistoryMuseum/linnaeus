@@ -1,4 +1,2 @@
-
-        [console_scripts]
-        linnaeus=linnaeus.cli:cli
-    
+[console_scripts]
+linnaeus = linnaeus.cli:cli

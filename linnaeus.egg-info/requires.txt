@@ -1,7 +1,7 @@
 numpy
-opencv-python<4
+opencv-python
 ortools
-pillow>=5.2.0
+pillow
 requests
 progress
 pandas
@@ -16,3 +16,4 @@ click
 qrcode
 scikit-image
 watchdog
+filetype

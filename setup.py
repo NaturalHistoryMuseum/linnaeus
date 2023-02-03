@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 from setuptools import find_packages, setup
+import os
 
 NAME = 'linnaeus'
 DESCRIPTION = 'Recreate reference images using tiny images as pixels.'
@@ -9,9 +10,11 @@ URL = 'https://github.com/NaturalHistoryMuseum/linnaeus'
 EMAIL = 'data@nhm.ac.uk'
 AUTHOR = 'Alice Butcher'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '1.14.2'
+VERSION = '1.14.3'
 
-with open('requirements.txt', 'r') as req_file:
+root = os.path.dirname(os.path.abspath(__file__))
+
+with open(root + '/requirements.txt', 'r') as req_file:
     REQUIRED = [r.strip() for r in req_file.readlines()]
 
 setup(
@@ -27,7 +30,7 @@ setup(
     install_requires=REQUIRED,
     include_package_data=True,
     package_data={
-        'linnaeus': ['utils/scales.pkl']
+        'linnaeus': [root + '/utils/scales.pkl']
         },
     entry_points='''
         [console_scripts]
