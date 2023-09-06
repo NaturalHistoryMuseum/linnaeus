@@ -181,7 +181,7 @@ class Builder(object):
         return solution
 
     @classmethod
-    def fill(cls, solution_map: SolutionMap, adjust=True, prefix=None):
+    def fill(cls, solution_map: SolutionMap, adjust=True, soft_adjust=False, prefix=None):
         logger.debug('building image')
         canvas = Canvas(solution_map.bounds)
         with ProgressLogger(len(solution_map), 10) as p:
@@ -192,8 +192,12 @@ class Builder(object):
                                       dominant_colour=colour.array
                                       if colour is not None else None)
                 target = entries.get('target', None)
-                img = component.adjust(
-                    *target.entry) if adjust and target is not None else component.img
+                if adjust and target is not None:
+                    img = component.adjust(*target.entry)
+                elif soft_adjust and target is not None:
+                    img = component.soft_adjust(*target.entry)
+                else:
+                    img = component.img
                 canvas.paste(record.key.x, record.key.y, img, entries['path'])
                 p.next()
         logger.debug('image finished')
