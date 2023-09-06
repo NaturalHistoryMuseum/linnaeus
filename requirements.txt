@@ -3,7 +3,7 @@ click~=8.1.7
 filetype~=1.2.0
 matplotlib~=3.7.2
 numba~=0.57.1
-numpy~=1.25.2
+numpy<1.25
 opencv-python~=4.8.0.76
 ortools~=9.7.2996
 pandas~=2.1.0
