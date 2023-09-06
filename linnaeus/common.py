@@ -28,7 +28,7 @@ def hsv_pixels_with_xy(img):
 def tryint(i):
     try:
         if isinstance(i, np.generic):
-            return np.asscalar(i)
+            return i.item()
         else:
             return int(i)
     except ValueError:
