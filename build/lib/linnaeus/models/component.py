@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image, ImageChops
+from matplotlib import pyplot as plt
 
 from linnaeus import common
 from linnaeus.config import constants
@@ -29,7 +30,19 @@ class Component(object):
                                        rounded)
             dom = data[mask].mean(axis=0).astype(int).tolist()
         elif constants.dominant_colour_method == 'saturated':
-            dom = data[data[..., 1] >= constants.saturation_threshold].mean(axis=0).astype(int).tolist()
+            saturation_threshold = constants.saturation_threshold
+            while True:
+                saturated_pixels = data[data[..., 1] >= saturation_threshold]
+                if len(saturated_pixels) > 0 or saturation_threshold == 0:
+                    break
+                saturation_threshold -= 5
+            if len(saturated_pixels) == 0:
+                raise Exception('not enough saturated pixels')
+            dom = saturated_pixels.mean(axis=0).astype(int).tolist()
+        elif constants.dominant_colour_method == 'value':
+            dom = [0, 0, np.median(data, axis=0).astype(int).tolist()[2]]
+        elif constants.dominant_colour_method == 'median':
+            dom = np.median(data, axis=0).astype(int).tolist()
         else:
             # avg
             dom = data.mean(axis=0).astype(int).tolist()
@@ -49,13 +62,9 @@ class Component(object):
         :param v: the target value (0 - 255)
         :return: the adjusted image as a PIL Image object
         """
-        ch, cs, cv = self.dominant
         add_hsv = [0, 0, 0]
         subtract_hsv = [0, 0, 0]
-        stats = [(h, ch), (s, cs),
-                 (v, cv)]
-        for i in range(len(stats)):
-            target, current = stats[i]
+        for i, target, current in zip(range(3), [h,s,v], self.dominant):
             err = abs(target - current)
             if target > current:
                 add_hsv[i] = err
@@ -66,6 +75,35 @@ class Component(object):
             'RGB')
         subtract_overlay = Image.new('HSV', self.img.size,
                                      color=tuple(subtract_hsv)).convert('RGB')
+
+        img = ImageChops.add(self.img, add_overlay)
+        img = ImageChops.subtract(img, subtract_overlay)
+        return img
+
+    def soft_adjust(self, *hsv):
+        """Slightly adjusts the image to make the dominant colour the same as the target.
+
+        :param h: the target hue (0 - 255)
+        :param s: the target saturation (0 - 255)
+        :param v: the target value (0 - 255)
+        :return: the adjusted image as a PIL Image object
+        """
+        halfway_values = [(c + t)//2 for c, t in zip(self.dominant, hsv)]
+
+        add_hsv = [0, 0, 0]
+        subtract_hsv = [0, 0, 0]
+        for i, target, current in zip(range(3), halfway_values, self.dominant):
+            err = abs(target - current)
+            if target > current:
+                add_hsv[i] = err
+            else:
+                subtract_hsv[i] = err
+
+        add_overlay = Image.new('HSV', self.img.size, color=tuple(add_hsv)).convert(
+            'RGB')
+        subtract_overlay = Image.new('HSV', self.img.size,
+                                     color=tuple(subtract_hsv)).convert('RGB')
+
         img = ImageChops.add(self.img, add_overlay)
         img = ImageChops.subtract(img, subtract_overlay)
         return img

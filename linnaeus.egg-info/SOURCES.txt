@@ -35,3 +35,7 @@ linnaeus/utils/download.py
 linnaeus/utils/draw.py
 linnaeus/utils/format.py
 linnaeus/utils/portal.py
+tests/test_builder.py
+tests/test_component.py
+tests/test_map.py
+tests/test_mapfactory.py
