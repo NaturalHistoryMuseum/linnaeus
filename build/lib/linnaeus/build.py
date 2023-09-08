@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 from numba import njit
-from ortools.graph import pywrapgraph
+from ortools.graph.python import min_cost_flow
 from scipy import sparse
 from sklearn.metrics.pairwise import pairwise_distances
 
@@ -77,13 +77,13 @@ class Builder(object):
         arc_count = rows + cols + cost_arcs
         supplies = np.concatenate(([rows], np.zeros(rows + cols), [-rows])).astype(int)
         logger.debug(f'adding {arc_count} arcs to solver ')
-        solver = pywrapgraph.SimpleMinCostFlow()
+        solver = min_cost_flow.SimpleMinCostFlow()
         logger.debug(f'section 1: {rows} items')
         with ProgressLogger(rows, 2) as p:
             last_node = rows + cols + 1
             # section one
             for i in range(1, rows + 1):
-                solver.AddArcWithCapacityAndUnitCost(0,
+                solver.add_arc_with_capacity_and_unit_cost(0,
                                                      i,
                                                      1,
                                                      0)
@@ -94,7 +94,7 @@ class Builder(object):
             if use_mask:
                 for n in cost_matrix:
                     r, c, cost = get_ints(*n)
-                    solver.AddArcWithCapacityAndUnitCost(r,
+                    solver.add_arc_with_capacity_and_unit_cost(r,
                                                          c,
                                                          1,
                                                          cost)
@@ -109,7 +109,7 @@ class Builder(object):
                                             cost_matrix[block_start:block_end]), axis=1)
                     for block_row in block:
                         c, cost = get_ints(*block_row)
-                        solver.AddArcWithCapacityAndUnitCost(rn,
+                        solver.add_arc_with_capacity_and_unit_cost(rn,
                                                              c,
                                                              1,
                                                              cost)
@@ -118,7 +118,7 @@ class Builder(object):
         with ProgressLogger(cols, 3) as p:
             # section three
             for i in range(rows + 1, last_node):
-                solver.AddArcWithCapacityAndUnitCost(
+                solver.add_arc_with_capacity_and_unit_cost(
                     i,
                     last_node,
                     1,
@@ -126,19 +126,19 @@ class Builder(object):
                 p.next()
         logger.debug('adding node supply')
         for i in range(supplies.size):
-            solver.SetNodeSupply(i, np.asscalar(supplies[i]))
+            solver.set_node_supply(i, supplies[i].item())
         logger.debug('solving')
         with TimeLogger():
-            status = solver.Solve()
+            status = solver.solve()
         if status == solver.OPTIMAL:
             logger.debug('building solution map')
-            logger.debug(f'processing {solver.NumArcs()} arcs')
-            with ProgressLogger(solver.NumArcs(), 20) as p, SolutionMap() as solution:
+            logger.debug(f'processing {solver.num_arcs()} arcs')
+            with ProgressLogger(solver.num_arcs(), 20) as p, SolutionMap() as solution:
                 ref_map_len = len(ref_map)
-                for arc in range(solver.NumArcs()):
-                    t = solver.Tail(arc)
-                    h = solver.Head(arc)
-                    f = solver.Flow(arc)
+                for arc in range(solver.num_arcs()):
+                    t = solver.tail(arc)
+                    h = solver.head(arc)
+                    f = solver.flow(arc)
                     if 0 < t <= ref_map_len and h != arc_count and f > 0:
                         pixel = ref_map.worker(t)
                         comp = comp_map.task(h, ref_map_len)
@@ -181,7 +181,7 @@ class Builder(object):
         return solution
 
     @classmethod
-    def fill(cls, solution_map: SolutionMap, adjust=True, prefix=None):
+    def fill(cls, solution_map: SolutionMap, adjust=True, soft_adjust=False, prefix=None):
         logger.debug('building image')
         canvas = Canvas(solution_map.bounds)
         with ProgressLogger(len(solution_map), 10) as p:
@@ -192,8 +192,12 @@ class Builder(object):
                                       dominant_colour=colour.array
                                       if colour is not None else None)
                 target = entries.get('target', None)
-                img = component.adjust(
-                    *target.entry) if adjust and target is not None else component.img
+                if adjust and target is not None:
+                    img = component.adjust(*target.entry)
+                elif soft_adjust and target is not None:
+                    img = component.soft_adjust(*target.entry)
+                else:
+                    img = component.img
                 canvas.paste(record.key.x, record.key.y, img, entries['path'])
                 p.next()
         logger.debug('image finished')
@@ -240,7 +244,7 @@ class SolveError(Exception):
 
     @staticmethod
     def codes(error_code):
-        solve_cls = pywrapgraph.SimpleMinCostFlow
+        solve_cls = min_cost_flow.SimpleMinCostFlow
         codes = {getattr(solve_cls, i): i for i in dir(solve_cls) if
                  not callable(getattr(solve_cls, i)) and isinstance(
                      getattr(solve_cls, i),

@@ -172,10 +172,12 @@ def solve(ctx, inputs, output, tolerance, silhouette):
 @click.option('--adjust/--no-adjust', default=True,
               help='Whether or not to adjust the colour of the components to better '
                    'match the reference.')
+@click.option('--soft-adjust', default=False, is_flag=True,
+              help='Use the soft adjust method to slightly alter component colour.')
 @click.option('--prefix', type=click.Path(exists=True),
               help='The root directory of the components, either relative or absolute.')
 @click.pass_context
-def render(ctx, inputs, output, adjust, prefix):
+def render(ctx, inputs, output, adjust, soft_adjust, prefix):
     """
     Generates a jpg image from the given solution map.
 
@@ -184,10 +186,12 @@ def render(ctx, inputs, output, adjust, prefix):
     this is the case, use the '--prefix' flag to specify the location of the components.
     """
     from linnaeus import Builder, MapFactory
+    if soft_adjust:
+        adjust = False
     solution = inputs
     output = output or utils.new_filename(solution, new_folder='outputs', new_ext='png')
     solution_map = utils.deserialise(ctx, solution, MapFactory.solution())
-    canvas = Builder.fill(solution_map, adjust=adjust, prefix=prefix)
+    canvas = Builder.fill(solution_map, adjust=adjust, soft_adjust=soft_adjust, prefix=prefix)
     return utils.final(ctx, output, lambda x: canvas.save(x))
 
 

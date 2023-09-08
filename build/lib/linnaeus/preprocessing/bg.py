@@ -6,7 +6,8 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
 from skimage import filters, future
-from skimage.morphology import disk, watershed
+from skimage.morphology import disk
+from skimage.segmentation import watershed
 
 
 def show(img):

@@ -156,8 +156,8 @@ class ReferenceMapFactory(SolutionMapFactory):
         with ReferenceMap() as new_map:
             with ProgressLogger(len(hsv_pixels), 10) as p:
                 for pixel in hsv_pixels:
-                    rk = CoordinateEntry(np.asscalar(pixel[1]), np.asscalar(pixel[0]))
-                    rv = HsvEntry(*[np.asscalar(i) for i in pixel[2:]])
+                    rk = CoordinateEntry(pixel[1].item(), pixel[0].item())
+                    rv = HsvEntry(*[i.item() for i in pixel[2:]])
                     new_map.add(rk, rv)
                     p.next()
             return new_map
