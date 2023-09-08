@@ -126,19 +126,19 @@ class Builder(object):
                 p.next()
         logger.debug('adding node supply')
         for i in range(supplies.size):
-            solver.SetNodeSupply(i, supplies[i].item())
+            solver.set_node_supply(i, supplies[i].item())
         logger.debug('solving')
         with TimeLogger():
-            status = solver.Solve()
+            status = solver.solve()
         if status == solver.OPTIMAL:
             logger.debug('building solution map')
-            logger.debug(f'processing {solver.NumArcs()} arcs')
-            with ProgressLogger(solver.NumArcs(), 20) as p, SolutionMap() as solution:
+            logger.debug(f'processing {solver.num_arcs()} arcs')
+            with ProgressLogger(solver.num_arcs(), 20) as p, SolutionMap() as solution:
                 ref_map_len = len(ref_map)
-                for arc in range(solver.NumArcs()):
-                    t = solver.Tail(arc)
-                    h = solver.Head(arc)
-                    f = solver.Flow(arc)
+                for arc in range(solver.num_arcs()):
+                    t = solver.tail(arc)
+                    h = solver.head(arc)
+                    f = solver.flow(arc)
                     if 0 < t <= ref_map_len and h != arc_count and f > 0:
                         pixel = ref_map.worker(t)
                         comp = comp_map.task(h, ref_map_len)
