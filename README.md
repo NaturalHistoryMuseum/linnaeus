@@ -136,7 +136,7 @@ Small confession: it does cheat a _little_ bit. The pixels are matched to the be
 
 Here's an example of this (unadjusted on the left, adjusted on the right):
 
-![Unadjusted vs adjusted output](docs/static/images/comparison.jpg)
+![Unadjusted vs adjusted output](docs/comparison.ef51bb1b.jpg)
 
 If you don't want this behaviour, add `adjust=False` into the `Builder.fill()` method:
 
